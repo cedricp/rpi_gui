@@ -1,0 +1,41 @@
+# Utils library
+
+###########################################################
+# Variables Definitions
+###########################################################
+
+SOURCES = $(wildcard *.cpp)
+OBJECTS = $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
+STATIC_LIB=$(UTILS_LIBRARY_NAME)
+
+DEP_DOT_D=$(SOURCES:.cpp=.d)
+DEPENDENCY_FILES=$(addprefix $(OBJECTS_DIR)/,$(DEP_DOT_D))	
+
+CXXFLAGS+=$(GLOBAL_CXX_FLAGS)
+LD_FLAGS+=
+
+###########################################################
+# Rules
+###########################################################
+
+all: $(DEPENDENCY_FILES) $(STATIC_LIB)
+	echo "Builing static library " $(STATIC_LIB)
+	
+$(OBJECTS_DIR)/%.o: %.cpp
+	@$(CXX) $< -c $(CXXFLAGS) -o $@ 
+    
+$(STATIC_LIB): $(OBJECTS)
+	@$(AR) rcs $@ $(OBJECTS)
+	
+clean:
+	@rm -rf $(OBJECTS) $(STATIC_LIB) $(DEPENDENCY_FILES)
+	
+$(OBJECTS_DIR)/%.d: %.cpp
+	@echo "Building dependencies for $<"
+	@$(CXX) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
+
+###########################################################
+# Dependencies check
+###########################################################
+
+-include $(DEPENDENCY_FILES)
