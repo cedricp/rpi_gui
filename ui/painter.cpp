@@ -462,7 +462,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 	height += y;
 	width  += x;
 	if (!fill){
-		glBegin(GL_LINE_STRIP);
+		glBegin(GL_LINE_LOOP);
 		glVertex2f(x, y);
 		glVertex2f(x , height);
 		glVertex2f(width, height);

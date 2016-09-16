@@ -23,11 +23,10 @@ class Widget{
     bool   		m_visibility, m_transparent;
     WCallback	*m_callback;
     void		*m_callbackdata;
-    std::vector<Widget*> m_children_widgets;
     std::string m_name;
-    bool   m_dirty;
-    WImpl*  m_impl;
-    Painter* m_painter;
+    bool   		m_dirty;
+    WImpl*  	m_impl;
+    Painter* 	m_painter;
     
     void add_child(Widget* w);
     void remove_child(Widget* w);
@@ -37,15 +36,17 @@ class Widget{
     bool internal_mouse_motion_event(int x, int y, Widget **w);
     bool internal_mouse_wheel_event(int x, int y, int we, Widget **w);
     Widget* child_widget_in(int x, int y);
-    static void default_callback(Widget*, void*);
-protected:
 
+protected:
+    std::vector<Widget*> m_children_widgets;
+    int  		m_fixed_width, m_fixed_height;
     Widget 		*m_parent;
     FColor 		m_bgcolor;
     FColor 		m_fgcolor;
     int 		m_font_id;
     void		do_callback(Widget* w, void* arg);
     void		do_callback();
+    static void default_callback(Widget*, void*);
 public:
     Widget(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
     virtual ~Widget();
@@ -56,11 +57,11 @@ public:
     
     std::string name(){return m_name;}
 
-    void set_fg_color(const FColor& color){
+    void fg_color(const FColor& color){
         m_fgcolor = color;
     }
     
-    void set_bg_color(const FColor& color){
+    void bg_color(const FColor& color){
         m_bgcolor = color;
     }
 
@@ -69,19 +70,30 @@ public:
     int x();
     int y();
 
+    void x(int x);
+    void y(int y);
+
     IBbox 	screen_bbox();
+    IBbox 	screen_bbox_corrected();
     IBbox 	relative_bbox();
     void 	screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy);
     
     virtual void draw();
     virtual void resize(int x, int y, int w, int h);
     virtual void resize(int w, int h);
+
     
     void hide();
     void show();
     void close();
     void destroy_children();
     
+    int  fixed_width(){return m_fixed_width;}
+    int  fixed_height(){return m_fixed_height;}
+
+    void  fixed_width(int w){m_fixed_width = w;}
+    void  fixed_height(int h){m_fixed_height = h;}
+
     bool hidden(){return m_visibility;}
     void parent(Widget* w);
     void update(bool full_redraw = false);
@@ -114,6 +126,8 @@ public:
     virtual bool mouse_motion_event(int x, int y);
     virtual bool drag_event(int rel_x, int rel_y);
     virtual void timer_event(void* data);
+    virtual bool accept_drag(int x, int y);
+    virtual void widget_added_event(Widget* widget);
 
 };
 

@@ -64,8 +64,8 @@ Compositor::Compositor()
     }
 
     m_impl->glcontext = SDL_GL_CreateContext(m_impl->window);
-    m_focus_widget = NULL;
-
+    m_focus_drag_widget = NULL;
+    m_drag_started = false;
     g_painter = new Painter;
 }
 
@@ -196,24 +196,43 @@ Compositor::handle_mouse_button_event(int button, bool push)
     Widget *which;
     which = NULL;
 
-    if (m_focus_widget){
+    // A drag operation is in progress, let's manage it
+    if (m_focus_drag_widget){
     	bool taken = false;
-    	if (m_focus_widget->screen_bbox().contains(x, y)){
-    		taken = m_focus_widget->internal_mouse_button_event(x, y, reassigned, &which, push);
+    	bool still_in_focus_widget = m_focus_drag_widget->screen_bbox().contains(x, y);
+
+    	if (still_in_focus_widget && !m_drag_started){
+    		taken = m_focus_drag_widget->internal_mouse_button_event(x, y, reassigned, &which, push);
     	}
+
     	if (reassigned==EVENT_MOUSE_BUTTON_LEFT && !push){
-    		if (!m_focus_widget->screen_bbox().contains(x, y))
-    			m_focus_widget->leave_event();
-    		m_focus_widget = NULL;
+    		if (!still_in_focus_widget)
+    			m_focus_drag_widget->leave_event();
+    		else
+    			m_focus_drag_widget->mouse_release_event(EVENT_MOUSE_BUTTON_LEFT);
+    		m_focus_drag_widget = NULL;
     	}
+
     	return true;
     }
 
+    // Normal operations, send events to widgets
     for (; it != m_widgets.rend(); ++it){
         if ((*it)->screen_bbox().contains(x, y)){
             bool taken = (*it)->internal_mouse_button_event(x, y, reassigned, &which, push);
             if (taken && which && push && reassigned == EVENT_MOUSE_BUTTON_LEFT){
-            	m_focus_widget = which;
+            	m_drag_started = false;
+            	// We want to pass drag event to widget or parent widget accepting it
+            	Widget* w = which;
+            	while(w){
+            		IBbox scrb = w->screen_bbox();
+            		int rel_x = x - scrb.xmin();
+            		int rel_y = y - scrb.ymin();
+            		if (w->accept_drag(rel_x, rel_y))
+            			break;
+            		w = w->parent();
+            	}
+            	m_focus_drag_widget = w;
             	m_drag_x = x;
             	m_drag_y = y;
             }
@@ -267,8 +286,9 @@ Compositor::handle_mouse_move_event(int x, int y)
     which = NULL;
     bool taken = false;
 
-    if (m_focus_widget){
-    	return m_focus_widget->drag_event(m_drag_x - x, m_drag_y - y);
+    if (m_focus_drag_widget){
+    	m_drag_started = true;
+    	return m_focus_drag_widget->drag_event(m_drag_x - x, m_drag_y - y);
     }
 
     std::vector<Widget*>::reverse_iterator it = m_widgets.rbegin();

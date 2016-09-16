@@ -15,8 +15,9 @@ enum custom_events{
 
 class Compositor {
     std::vector<Widget*> m_widgets;
-    Widget* m_focus_widget;
+    Widget* m_focus_drag_widget;
     int		m_drag_x, m_drag_y;
+    bool	m_drag_started;
     Impl * m_impl;
     bool handle_mouse_button_event(int, bool);
     bool handle_mouse_wheel_event(int);

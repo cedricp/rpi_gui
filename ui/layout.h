@@ -11,12 +11,12 @@ enum Layout_style{
 class Layout : public Widget
 {
 	Layout_style m_style;
-	std::vector<Widget*> m_layout_widget;
 public:
-	Layout(int x, int y, int w, int h, const char* name = "", Widget* parent = NULL);
+	Layout(int x, int y, int w, int h, const char* name = "", Widget* parent = NULL, Layout_style style = LAYOUT_VERTICAL);
 	~Layout();
 
-	void add_widget(Widget*);
+	virtual void widget_added_event(Widget* widget);
+
 	void set_style(Layout_style style);
 	void compute_layout();
 };

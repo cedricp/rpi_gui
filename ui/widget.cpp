@@ -16,20 +16,21 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_fgcolor 	= FColor(1., 1., 1., 1.);
     
     m_bbox = IBbox(x, x + width, y, y + height);
-    
-    if (parent == NULL){
-        COMPOSITOR->add_widget(this);
-    } else {
-        parent->add_child(this);
-    }
-    
+
     m_name      	= name;
     m_dirty     	= true;
     m_visibility	= true;
     m_callback  	= default_callback;
     m_callbackdata 	= NULL;
     m_transparent	= false;
+    m_fixed_width 	= m_fixed_height = -1;
     use_default_font();
+
+    if (parent == NULL){
+        COMPOSITOR->add_widget(this);
+    } else {
+        parent->add_child(this);
+    }
 }
 
 Widget::~Widget()
@@ -92,27 +93,31 @@ void Widget::internal_draw(bool force)
 			return;
 	}
 
-    int screen_h = COMPOSITOR->screen_height();
-    IBbox bscr = screen_bbox();
+    int screen_h 	= COMPOSITOR->screen_height();
+    IBbox bscr 		= screen_bbox_corrected();
 
     // Clamp drawing to parent size
-    if (m_parent){
-    	IBbox bpar = m_parent->screen_bbox();
-    	if (bscr.xmax() > bpar.xmax()){
-    		bscr.xmax(bpar.xmax());
-    	}
-    	if (bscr.ymax() > bpar.ymax()){
-    		bscr.ymax(bpar.ymax());
-    	}
+    Widget* parent = m_parent;
+    while (parent){
+    	bscr.crop(parent->screen_bbox_corrected());
+    	parent = parent->m_parent;
     }
 
+    // Widget is outside parent bounds
+    if (bscr.width() == 0 && bscr.height() == 0)
+    	return;
+
+    // Start drawing stuffs
     painter().load_identity();
-    painter().viewport( bscr.xmin(), screen_h - bscr.ymin() - bscr.height(), bscr.width(), bscr.height() );
-    painter().create_ortho_matrix(0, bscr.width(), m_bbox.height(), 0, -1.0, 1.0);
-    painter().scissor_begin( bscr.xmin(), screen_h - bscr.ymin() - bscr.height(), bscr.width(), bscr.height() );
+    painter().viewport( screen_bbox_corrected().xmin(), screen_bbox_corrected().ymin(), screen_bbox_corrected().width(), screen_bbox_corrected().height() );
+    painter().create_ortho_matrix(0, screen_bbox_corrected().width(), screen_bbox_corrected().height(), 0, -1.0, 1.0);
+    painter().scissor_begin( bscr.xmin(), bscr.ymin(), bscr.width(), bscr.height() );
+
     if (!m_transparent)
     	painter().clear_color_buffer(m_bgcolor);
+
     painter().color(m_fgcolor);
+    // Call widget custom draw method
     draw();
     painter().scissor_end();
 
@@ -194,6 +199,12 @@ Widget::parent(Widget* w)
     m_parent->add_child(w);
 }
 
+bool
+Widget::accept_drag(int x, int y)
+{
+	return false;
+}
+
 void
 Widget::add_child(Widget* w)
 {
@@ -202,6 +213,7 @@ Widget::add_child(Widget* w)
     } else {
         std::cerr << "Warning : trying to re-add child widget" << std::endl;
     }
+    widget_added_event(w);
 }
 
 void Widget::remove_child(Widget* w)
@@ -225,11 +237,11 @@ Widget::update(bool full_redraw)
     	}
     }
 
-	if (m_dirty || full_redraw)
-    	internal_draw(full_redraw);
-
     if (m_dirty)
     	full_redraw = true;
+
+	if (m_dirty || full_redraw)
+    	internal_draw(full_redraw);
 
     it = m_children_widgets.begin();
     for (; it < m_children_widgets.end(); ++it){
@@ -301,6 +313,25 @@ IBbox
 Widget::relative_bbox()
 {
     return m_bbox;
+}
+
+IBbox
+Widget::screen_bbox_corrected()
+{
+    int width  = m_bbox.width();
+    int height = m_bbox.height();
+    int x = m_bbox.xmin();
+    int y = m_bbox.ymin();
+
+    Widget* parent = m_parent;
+    while(parent){
+        x += parent->m_bbox.xmin();
+        y += parent->m_bbox.ymin();
+        parent = parent->m_parent;
+    }
+
+    int new_y = COMPOSITOR->screen_height() - y - height;
+    return IBbox(x, x + width, new_y, new_y + height);
 }
 
 IBbox
@@ -466,6 +497,22 @@ Widget::y()
 }
 
 void
+Widget::x(int x)
+{
+	int w_hold= w();
+	m_bbox.xmin(x);
+	m_bbox.xmax(x + w_hold);
+}
+
+void
+Widget::y(int y)
+{
+	int h_hold = h();
+	m_bbox.ymin(y);
+	m_bbox.ymax(y + h_hold);
+}
+
+void
 Widget::use_font(std::string font_name)
 {
 	m_font_id = painter().font_by_name(font_name);
@@ -481,4 +528,10 @@ void
 Widget::load_font(std::string font_filename, int size, int atlas_size)
 {
 	m_font_id  = painter().load_fonts(font_filename, size, atlas_size);
+}
+
+void
+Widget::widget_added_event(Widget* widget)
+{
+
 }

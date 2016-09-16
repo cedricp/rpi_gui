@@ -4,6 +4,9 @@ Scroll::Scroll(int x, int y, int width, int height, const char* name, Widget* pa
 {
 	m_scroll_widget = NULL;
 	m_oldx = m_oldy = 0;
+	if (m_children_widgets.size() > 0){
+		set_scroll_widget(m_children_widgets[0]);
+	}
 }
 
 bool
@@ -36,6 +39,9 @@ Scroll::drag_event(int rel_x, int rel_y)
 void
 Scroll::set_scroll_widget(Widget* scroll_widget)
 {
+	if (m_children_widgets.size() > 1){
+		std::cerr << "Scroll::set_scroll_widget : cannot manage more than one children widget" << std::endl;
+	}
 	if (!scroll_widget){
 		std::cerr << "Scroll::set_scroll_widget : inserting NULL widget" << std::endl;
 		return;
@@ -49,11 +55,18 @@ Scroll::set_scroll_widget(Widget* scroll_widget)
 }
 
 bool
-Scroll::accept_drag()
+Scroll::accept_drag(int x, int y)
 {
+	if (!m_scroll_widget)
+		return false;
 	m_oldx = m_scroll_widget->x();
 	m_oldy = m_scroll_widget->y();
 	return true;
+}
+
+void Scroll::widget_added_event(Widget* widget)
+{
+	set_scroll_widget(widget);
 }
 
 void
