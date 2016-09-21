@@ -1,6 +1,7 @@
 #include "painter.h"
 #include "bbox.h"
 #include "string_utils.h"
+#include "shaders_gl.h"
 
 #include "nanosvg.h"
 #include "nanosvgrast.h"
@@ -82,31 +83,6 @@ Text_data::~Text_data(){
 	delete data;
 };
 
-const char* vertex_shader_src =
-	"attribute vec3		position;\n"
-	"attribute vec2		st;\n"
-	"uniform mat4		mvp;\n"
-	"uniform mat4		xform;\n"
-	"uniform vec4		ucolor;\n"
-	"varying vec4		fcolor;\n"
-	"varying vec2		frag_uv;\n"
-	"void main(void) {\n"
-	"       frag_uv = st;\n"
-	"		fcolor = ucolor;"
-	"       gl_Position = mvp * xform * vec4(position,1);\n"
-	"}\n";
-
-const char * frag_shader_src =
-	"precision mediump float;\n"
-	"uniform sampler2D	texture_uniform;\n"
-	"varying vec2 		frag_uv;\n"
-	"varying vec4 		fcolor;\n"
-	"void main()\n"
-	"{\n"
-	"	vec4 tex_color = texture2D(texture_uniform, frag_uv);\n"
-	"   gl_FragColor = fcolor * tex_color;\n"
-	"}\n";
-
 
 void generate_text(Text_data& td)
 {
@@ -183,7 +159,8 @@ Painter::~Painter()
 }
 #ifndef USE_OPENGL
 
-GLuint load_shader(const char *shaderSrc, GLenum type)
+static GLuint
+load_shader(const char *shaderSrc, GLenum type)
 {
 	GLuint shader;
 	GLint compiled;
@@ -221,9 +198,9 @@ GLuint load_shader(const char *shaderSrc, GLenum type)
 void
 Painter::init_gles2()
 {
-	m_impl->vertex_shader = load_shader(GL_VERTEX_SHADER, vertex_shader_src);
+	m_impl->vertex_shader 	= load_shader(GL_VERTEX_SHADER, vertex_shader_src);
 	m_impl->fragment_shader = load_shader(GL_FRAGMENT_SHADER, frag_shader_src);
-	m_impl->program_handle = glCreateProgram();
+	m_impl->program_handle 	= glCreateProgram();
 
 	if(m_impl->program_handle == 0)
 		return;
@@ -493,6 +470,7 @@ Painter::use_texture(unsigned int texid)
 {
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture(GL_TEXTURE_2D, texid);
+
 	glEnable(GL_TEXTURE_2D);
 #ifndef USE_OPENGL
 	glUniform1i ( m_impl->sampler_handle, 0);
@@ -571,6 +549,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 	float ww = width;
 	float hh = height;
 
+	glUseProgram(m_impl->program_handle);
 	if (!fill){
 		GLfloat gl_data[] = {  xx, yy, 0., 0.,
 							   xx, hh, 0., 1.,
@@ -705,6 +684,7 @@ Painter::draw_text(const Text_data& data)
 	}
 	glEnd();
 #else
+	glUseProgram(m_impl->program_handle);
 	glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), text_vector->items );
 	glEnableVertexAttribArray ( m_impl->vertex_handle );
 	glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)text_vector->items+2 );

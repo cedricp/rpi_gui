@@ -1,5 +1,6 @@
 # UI library
 
+
 ###########################################################
 # Variables Definitions
 ###########################################################
@@ -22,7 +23,7 @@ DEPENDENCY_FILES=$(addprefix $(OBJECTS_DIR)/,$(DEP_DOT_D))
 all: $(STATIC_LIB)
 	echo "Builing static library " $(STATIC_LIB)
 	
-CXXFLAGS+=-I$(SRC_ROOT_DIR)/utils $(GLOBAL_CXX_FLAGS) $(LIB_SDL2_CXXFLAGS) -DUSE_OPENGL=1
+CXXFLAGS+=-I$(SRC_ROOT_DIR)/utils $(GLOBAL_CXX_FLAGS) $(LIB_SDL2_CXXFLAGS) $(LIB_GL_CXXFLAGS)
 LD_FLAGS+=$(GLOBAL_LD_FLAGS) $(LIB_SDL2_LDFLAGS) $(LIB_GL_LDFLAGS)
 
 

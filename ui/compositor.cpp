@@ -378,7 +378,6 @@ Compositor::run()
 
 	SDL_GL_SwapWindow(m_impl->window);
     bool quit = false;
-    bool dragging[4] = {0, 0, 0, 0};
     
     while(!quit) {
     	bool full_update = false;
