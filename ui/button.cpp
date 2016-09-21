@@ -9,7 +9,11 @@ Button::Button(int x, int y, int width, int height, const char* name, Widget* pa
 	m_fgcolor = m_original_fg;
 	m_image_id = -1;
 	m_imgh = m_imgw = 0;
-	m_label = name;
+}
+
+Button::~Button()
+{
+	painter().delete_texture(m_image_id);
 }
 
 void
@@ -34,12 +38,21 @@ Button::draw(){
 	painter().enable_alpha(true);
 	painter().draw_quad(x, y, m_imgw, m_imgh, true);
 
-	if (!m_label.empty()){
-		IBbox bound(painter().bound_text(m_font_id, m_label.c_str()));
-		int xt = (w() - bound.width()) / 2;
-		int yt = (h() - bound.height()) / 2 + bound.height() / 2;
-		painter().draw_text(m_font_id, m_label.c_str(), xt, yt);
+	if (!m_text_data.text.empty()){
+		IBbox bound(m_text_data.bbox);
+		int x = (w() - bound.width()) / 2;
+		int y = (h() - bound.height()) / 2 + bound.height() / 2;
+		push_model_matrix();
+		translate(x, y);
+		painter().draw_text(m_text_data);
+		pop_model_matrix();
 	}
+}
+
+void
+Button::set_label(std::string label)
+{
+	painter().build_text(m_font_id, label.c_str(), 0, 0, m_text_data);
 }
 
 bool

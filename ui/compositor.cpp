@@ -282,6 +282,9 @@ Compositor::handle_mouse_wheel_event(int wheel_ev)
 bool
 Compositor::handle_mouse_move_event(int x, int y)
 {
+	m_curr_mousex = x;
+	m_curr_mousey = y;
+
     Widget *which;
     which = NULL;
     bool taken = false;
@@ -317,7 +320,9 @@ Compositor::handle_mouse_move_event(int x, int y)
 Widget*
 Compositor::create_new_window()
 {
-    Widget* new_widget = new Widget(0, 0, 100, 100, "Window", NULL);
+    int w, h;
+    SDL_GetWindowSize(m_impl->window, &w, &h);
+    Widget* new_widget = new Widget(0, 0, w, h, "Window", NULL);
     return new_widget;
 }
 
@@ -444,4 +449,11 @@ Compositor::run()
     SDL_DestroyWindow(m_impl->window);
     SDL_Quit();
     return 0;
+}
+
+void
+Compositor::mouse_position(int &x, int &y)
+{
+	x = m_curr_mousex;
+	y = m_curr_mousey;
 }

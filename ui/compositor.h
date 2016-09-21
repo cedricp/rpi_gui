@@ -18,7 +18,8 @@ class Compositor {
     Widget* m_focus_drag_widget;
     int		m_drag_x, m_drag_y;
     bool	m_drag_started;
-    Impl * m_impl;
+    Impl 	*m_impl;
+    int 	m_curr_mousex, m_curr_mousey;
     bool handle_mouse_button_event(int, bool);
     bool handle_mouse_wheel_event(int);
     bool handle_mouse_move_event(int x, int y);
@@ -44,6 +45,7 @@ public:
     int    	screen_height();
     int    	screen_width();
     int 	run();
+    void	mouse_position(int &x, int &y);
 };
 
 #define COMPOSITOR Compositor::get_singleton()

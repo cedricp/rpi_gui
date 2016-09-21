@@ -17,9 +17,9 @@ enum valign {
 
 class Label : public Widget
 {
-	std::string m_label;
 	halign m_halign;
 	valign m_valign;
+	Text_data m_label_info;
 protected:
 	virtual void draw();
 public:

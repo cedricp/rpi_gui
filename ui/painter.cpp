@@ -7,6 +7,9 @@
 
 #include "fontlib/texture-font.h"
 
+//#undef USE_OPENGL
+
+
 #ifdef USE_OPENGL
 #include <GL/gl.h>
 #else
@@ -34,77 +37,98 @@ struct Img_info{
 };
 
 struct Font_info{
+	Font_info(){
+		atlas = NULL;
+		font  = NULL;
+	}
 	texture_atlas_t *atlas;
 	texture_font_t *font;
 	std::string    name;
 	int size, atlas_size;
 };
 
+struct FontImpl{
+	FontImpl(){
+		text_vector = NULL;
+	}
+	~FontImpl(){
+		if(text_vector)
+			vector_delete(text_vector);
+	}
+	vector_t* text_vector;
+	Font_info finfo;
+};
+
 struct PImpl{
-	GLfloat current_matrix[16];
 	std::map< std::string, Img_info > textures;
 	std::vector< Font_info > fonts;
 	unsigned int default_font_idx;
 #ifndef USE_OPENGL
-	GLint	mat_loc;
-	GLuint	program;
+	GLint	matrix_projection, matrix_model;
+	GLuint	program_handle;
 	GLuint	vertex_shader, fragment_shader;
+	int vertex_handle, texture_handle, sampler_handle, color_handler;
 #endif
 };
 
-#ifndef USE_OPENGL
-const unsigned int ID_VERTS=0;
-const unsigned int ID_COLOURS=1;
-const unsigned int UI_TEXCOORDS=2;
-#endif
-
-const char* vertex_shader_src = "\
-#version 130\
-in vec3 position;\
-in vec3 colour;\
-uniform mat4 matrix;\
-smooth out vec4 vColor;\
-\
-void main(void)\
-{\
-\
-	gl_Position = vec4(position, 1.0f)*projection;\
-	vColor = vec4(colour, 1.0); \
-}\
-";
-
-#define A(row,col)  a[(col<<2)+row]
-#define B(row,col)  b[(col<<2)+row]
-#define P(row,col)  product[(col<<2)+row]
-static void matmul4( GLfloat *product, const GLfloat *a, const GLfloat *b )
+Text_data::Text_data()
 {
-   GLint i;
-   for (i = 0; i < 4; i++) {
-      const GLfloat ai0=A(i,0),  ai1=A(i,1),  ai2=A(i,2),  ai3=A(i,3);
-      P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
-      P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
-      P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
-      P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
-   }
+	data = new FontImpl;
 }
 
-void generate_text(const Font_info& finfo, const std::string& text, int start_x, int start_y, vector_t* vVector)
+Text_data::~Text_data(){
+	if (data->text_vector)
+		vector_delete(data->text_vector);
+	delete data;
+};
+
+const char* vertex_shader_src =
+	"attribute vec3		position;\n"
+	"attribute vec2		st;\n"
+	"uniform mat4		mvp;\n"
+	"uniform mat4		xform;\n"
+	"uniform vec4		ucolor;\n"
+	"varying vec4		fcolor;\n"
+	"varying vec2		frag_uv;\n"
+	"void main(void) {\n"
+	"       frag_uv = st;\n"
+	"		fcolor = ucolor;"
+	"       gl_Position = mvp * xform * vec4(position,1);\n"
+	"}\n";
+
+const char * frag_shader_src =
+	"precision mediump float;\n"
+	"uniform sampler2D	texture_uniform;\n"
+	"varying vec2 		frag_uv;\n"
+	"varying vec4 		fcolor;\n"
+	"void main()\n"
+	"{\n"
+	"	vec4 tex_color = texture2D(texture_uniform, frag_uv);\n"
+	"   gl_FragColor = fcolor * tex_color;\n"
+	"}\n";
+
+
+void generate_text(Text_data& td)
 {
 	size_t i;
-	int start_x_mem = start_x;
-	for( i=0; i< text.size(); ++i )
+	int start_x_mem = 0;
+	int start_x = 0;
+	int start_y = 0;
+	empty_bbox(td.bbox);
+
+	for( i=0; i< td.text.size(); ++i )
 	{
-		if (text[i] == '\n'){
+		if (td.text[i] == '\n'){
 			start_x = start_x_mem;
-			start_y += finfo.size;
+			start_y += td.data->finfo.size;
 		}
-		texture_glyph_t *glyph = texture_font_get_glyph( finfo.font, text[i] );
+		texture_glyph_t *glyph = texture_font_get_glyph( td.data->finfo.font, td.text[i] );
 		if( glyph != NULL )
 		{
 			int kerning = 0;
 			if( i > 0)
 			{
-				kerning = texture_glyph_get_kerning( glyph, text[i-1] );
+				kerning = texture_glyph_get_kerning( glyph, td.text[i-1] );
 			}
 			start_x += kerning;
 			int x0  = (int)( start_x + glyph->offset_x );
@@ -115,6 +139,9 @@ void generate_text(const Font_info& finfo, const std::string& text, int start_x,
 			float t0 = glyph->t1;
 			float s1 = glyph->s1;
 			float t1 = glyph->t0;
+
+			td.bbox.extend(x0, y0);
+			td.bbox.extend(x1, y1);
 
 			// data is x,y,z,s,t
 			GLfloat vertices[] = {
@@ -132,7 +159,7 @@ void generate_text(const Font_info& finfo, const std::string& text, int start_x,
 			  s1,t0,
 			};
 
-			vector_push_back_data( vVector, vertices, 6*4);
+			vector_push_back_data( td.data->text_vector, vertices, 6*4);
 
 			start_x += glyph->advance_x;
 		}
@@ -142,7 +169,6 @@ void generate_text(const Font_info& finfo, const std::string& text, int start_x,
 Painter::Painter()
 {
 	m_impl = new PImpl;
-	load_identity();
 	std::string font_file;
 	if( locate_resource("custom.ttf", font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 14);
@@ -173,8 +199,7 @@ GLuint load_shader(const char *shaderSrc, GLenum type)
 	glCompileShader(shader);
 	// Check the compile status
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-	ch02.fm Page 21 Thursday, June 19, 2008 3:21 PM
-	22 Chapter 2: Hello Triangle: An OpenGL ES 2.0 Example
+
 	if(!compiled)
 	{
 		GLint infoLen = 0;
@@ -196,20 +221,27 @@ GLuint load_shader(const char *shaderSrc, GLenum type)
 void
 Painter::init_gles2()
 {
-	GLuint vertex_shader = load_shader(GL_FRAGMENT_SHADER, vertex_shader_src);
-	m_impl->program = glCreateProgram();
+	m_impl->vertex_shader = load_shader(GL_VERTEX_SHADER, vertex_shader_src);
+	m_impl->fragment_shader = load_shader(GL_FRAGMENT_SHADER, frag_shader_src);
+	m_impl->program_handle = glCreateProgram();
 
-	if(m_impl->program == 0)
+	if(m_impl->program_handle == 0)
 		return;
 
-	glAttachShader(m_impl->program, vertex_shader);
+	glAttachShader(m_impl->program_handle, m_impl->vertex_shader);
+	glAttachShader(m_impl->program_handle, m_impl->fragment_shader);
 
-	glUseProgram(m_impl->program);
-	glBindAttribLocation(m_impl->program, VERTS, "position");
-	glBindAttribLocation(m_impl->program, TEXCOORDS, "vtexCoord");
-	glLinkProgram(m_impl->program);
+	glLinkProgram(m_impl->program_handle);
 
-	m_impl->matloc = glGetUniformLocation(m_impl->program, "projection");
+	m_impl->matrix_projection 	= glGetUniformLocation(m_impl->program_handle, "mvp");
+	m_impl->matrix_model 		= glGetUniformLocation(m_impl->program_handle, "xform");
+
+	m_impl->vertex_handle  	= glGetAttribLocation ( m_impl->program_handle, "position" );
+	m_impl->texture_handle 	= glGetAttribLocation ( m_impl->program_handle, "st" );
+	m_impl->sampler_handle  = glGetUniformLocation( m_impl->program_handle, "texture_uniform" );
+	m_impl->color_handler	= glGetUniformLocation( m_impl->program_handle, "ucolor" );
+
+	glUseProgram(m_impl->program_handle);
 }
 #endif
 
@@ -220,11 +252,50 @@ Painter::viewport(int x,int y,int width, int height)
 }
 
 void
+Painter::use_default_gles_program()
+{
+#ifndef USE_OPENGL
+	glUseProgram(m_impl->program_handle);
+#endif
+}
+
+void Painter::create_perspective_matrix(float aspect_ratio, float fovy_degrees, float znear, float zfar, Matrix outmatrix)
+{
+	float temp, temp2, temp3, temp4;
+
+	float top 		= znear * tanf(fovy_degrees * M_PI / 360.0);
+	float bottom 	= -top;
+	float left 		= bottom * aspect_ratio;
+	float right 	= top * aspect_ratio;
+
+	temp 	= 2.0 * znear;
+	temp2 	= right - left;
+	temp3 	= top - bottom;
+	temp4 	= zfar - znear;
+
+	outmatrix[0] = temp / temp2;
+	outmatrix[1] = 0.0;
+	outmatrix[2] = 0.0;
+	outmatrix[3] = 0.0;
+	outmatrix[4] = 0.0;
+	outmatrix[5] = temp / temp3;
+	outmatrix[6] = 0.0;
+	outmatrix[7] = 0.0;
+	outmatrix[8] = (right + left) / temp2;
+	outmatrix[9] = (top + bottom) / temp3;
+	outmatrix[10] = (-zfar - znear) / temp4;
+	outmatrix[11] = -1.0;
+	outmatrix[12] = 0.0;
+	outmatrix[13] = 0.0;
+	outmatrix[14] = (-temp * zfar) / temp4;
+	outmatrix[15] = 0.0;
+}
+
+void
 Painter::create_ortho_matrix(float left, float right,
 							 float bottom, float top,
-							 float near, float far )
+							 float near, float far, Matrix outmatrix )
 {
-	GLfloat matrix[16];
     GLfloat r_l = right - left;
     GLfloat t_b = top - bottom;
     GLfloat f_n = far - near;
@@ -232,63 +303,53 @@ Painter::create_ortho_matrix(float left, float right,
     GLfloat ty = - (top + bottom) / (top - bottom);
     GLfloat tz = - (far + near) / (far - near);
 
-    matrix[0] = 2.0f / r_l;
-    matrix[4] = 0.0f;
-    matrix[8] = 0.0f;
-    matrix[12] = tx;
+    outmatrix[0] = 2.0f / r_l;
+    outmatrix[4] = 0.0f;
+    outmatrix[8] = 0.0f;
+    outmatrix[12] = tx;
 
-    matrix[1] = 0.0f;
-    matrix[5] = 2.0f / t_b;
-    matrix[9] = 0.0f;
-    matrix[13] = ty;
+    outmatrix[1] = 0.0f;
+    outmatrix[5] = 2.0f / t_b;
+    outmatrix[9] = 0.0f;
+    outmatrix[13] = ty;
 
-    matrix[2] = 0.0f;
-    matrix[6] = 0.0f;
-    matrix[10] = -2.0f / f_n;
-    matrix[14] = tz;
+    outmatrix[2] = 0.0f;
+    outmatrix[6] = 0.0f;
+    outmatrix[10] = -2.0f / f_n;
+    outmatrix[14] = tz;
 
-    matrix[3] = 0.0f;
-    matrix[7] = 0.0f;
-    matrix[11] = 0.0f;
-    matrix[15] = 1.0f;
+    outmatrix[3] = 0.0f;
+    outmatrix[7] = 0.0f;
+    outmatrix[11] = 0.0f;
+    outmatrix[15] = 1.0f;
+}
 
-    // glMultMatrix equivalent
-    matmul4(m_impl->current_matrix, m_impl->current_matrix, matrix );
-
+void
+Painter::load_projection_matrix(Matrix matrix)
+{
 #ifdef USE_OPENGL
-    glLoadMatrixf(m_impl->current_matrix);
+	glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(matrix);
 #else
-    glUniformMatrix4fv(m_impl->mat_loc, 1, GL_FALSE, &m_impl->current_matrix);
+    glUniformMatrix4fv(m_impl->matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
 
 void
-Painter::load_identity()
+Painter::load_model_matrix(Matrix matrix)
 {
-    m_impl->current_matrix[0] = 1.0f;
-    m_impl->current_matrix[4] = 0.0f;
-    m_impl->current_matrix[8] = 0.0f;
-    m_impl->current_matrix[12] =0.0f;
-
-    m_impl->current_matrix[1] = 0.0f;
-    m_impl->current_matrix[5] = 1.0f;
-    m_impl->current_matrix[9] = 0.0f;
-    m_impl->current_matrix[13] = 0.0f;
-
-    m_impl->current_matrix[2] = 0.0f;
-    m_impl->current_matrix[6] = 0.0f;
-    m_impl->current_matrix[10] = 1.0f;
-    m_impl->current_matrix[14] = 0.0f;
-
-    m_impl->current_matrix[3] = 0.0f;
-    m_impl->current_matrix[7] = 0.0f;
-    m_impl->current_matrix[11] = 0.0f;
-    m_impl->current_matrix[15] = 1.0f;
 #ifdef USE_OPENGL
-	glLoadMatrixf(m_impl->current_matrix);
+	glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(matrix);
 #else
-	glUniformMatrix4fv(m_impl->mat_loc, 1, GL_FALSE, &m_impl->current_matrix);
+    glUniformMatrix4fv(m_impl->matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
+}
+
+void
+Painter::load_identity(Matrix matrix)
+{
+	matrix4_identity(matrix);
 }
 
 void
@@ -308,13 +369,17 @@ void
 Painter::clear_color_buffer(const FColor&c)
 {
 	glClearColor(c.red(), c.green(), c.blue(), c.alpha());
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void
 Painter::color(const FColor& c)
 {
+#ifdef USE_OPENGL
 	glColor4f(c.red(), c.green(), c.blue(), c.alpha());
+#else
+	glUniform4f(m_impl->color_handler, c.red(), c.green(), c.blue(), c.alpha());
+#endif
 }
 
 char*
@@ -363,6 +428,19 @@ Painter::create_texture_svg(std::string name, std::string filename)
 		std::cerr << "Painter::create_texture_svg : cannot load image file " << filename << std::endl;
 		return 0;
 	}
+	int texid = create_texture(name, img, w, h);
+
+	free(img);
+	return texid;
+}
+
+unsigned int
+Painter::create_texture(std::string name, const char* img, int w, int h, TextureMode mode)
+{
+	if (m_impl->textures.find(name) != m_impl->textures.end()){
+		return m_impl->textures[name].texid;
+	}
+
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
@@ -370,11 +448,12 @@ Painter::create_texture_svg(std::string name, std::string filename)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
-
+	if (mode == TEXTURE_RGBA)
+		glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+	else if (mode == TEXTURE_ALPHA)
+		glTexImage2D(GL_TEXTURE_2D, 0,GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, img);
 
 	m_impl->textures[name] = Img_info(textureID, w, h);
-	free(img);
 	return textureID;
 }
 
@@ -412,8 +491,12 @@ Painter::delete_texture(std::string name){
 void
 Painter::use_texture(unsigned int texid)
 {
-	glEnable(GL_TEXTURE_2D);
+	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture(GL_TEXTURE_2D, texid);
+	glEnable(GL_TEXTURE_2D);
+#ifndef USE_OPENGL
+	glUniform1i ( m_impl->sampler_handle, 0);
+#endif
 }
 
 void
@@ -433,14 +516,14 @@ Painter::disable_texture()
 	glDisable(GL_TEXTURE_2D);
 }
 
-void
+bool
 Painter::use_texture(std::string name)
 {
 	if (m_impl->textures.find(name) == m_impl->textures.end()){
-		std::cerr << "Painter::use_texture : Texture " << name << " does not exist " << m_impl->textures.size() << std::endl;
-		return;
+		return false;
 	}
 	use_texture(m_impl->textures[name].texid);
+	return true;
 }
 
 void
@@ -470,6 +553,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 		glVertex2f(x, y);
 		glEnd();
 	} else {
+		glPolygonMode(GL_FRONT, GL_FILL);
 		glBegin(GL_QUADS);
 		glTexCoord2f(0, 0);
 		glVertex2f(x, y);
@@ -482,7 +566,42 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 		glEnd();
 	}
 #else
+	float xx = x;
+	float yy = y;
+	float ww = width;
+	float hh = height;
 
+	if (!fill){
+		GLfloat gl_data[] = {  xx, yy, 0., 0.,
+							   xx, hh, 0., 1.,
+							   ww, hh, 1., 1.,
+							   ww, yy, 1., 0.};
+
+		glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
+		glEnableVertexAttribArray ( m_impl->vertex_handle );
+		glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data)+2 );
+		glEnableVertexAttribArray ( m_impl->texture_handle );
+
+		glUniform1i ( m_impl->sampler_handle, 0);
+
+		glDrawArrays ( GL_LINE_LOOP, 0, 4 );
+	} else {
+		GLfloat gl_data[] = {  xx, yy, 0., 0.,
+							   xx, hh, 0., 1.,
+							   ww, yy, 1., 0.,
+							   xx, hh, 0., 1.,
+							   ww, hh, 1., 1.,
+							   ww, yy, 1., 0.};
+
+		glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
+		glEnableVertexAttribArray ( m_impl->vertex_handle );
+		glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data)+2 );
+		glEnableVertexAttribArray ( m_impl->texture_handle );
+
+		glUniform1i ( m_impl->sampler_handle, 0);
+
+		glDrawArrays ( TRIANGLES, 0, 6 );
+	}
 #endif
 }
 
@@ -548,20 +667,33 @@ Painter::remove_fonts(int idx)
 }
 
 void
-Painter::draw_text(int font_id, std::string text, int start_x, int start_y)
+Painter::build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data)
 {
-	vector_t * vVector = vector_new(sizeof(GLfloat));
+	data.data->finfo = m_impl->fonts[font_id];
+	data.text = text;
+	if (data.data->text_vector)
+		vector_delete(data.data->text_vector);
+	data.data->text_vector = vector_new(sizeof(GLfloat));
+	generate_text(data);
+}
 
-	Font_info finfo = m_impl->fonts[font_id];
-	generate_text(finfo, text, start_x, start_y, vVector);
+void
+Painter::draw_text(const Text_data& data)
+{
+	if (data.data->text_vector == NULL)
+		return;
 
 	glActiveTexture( GL_TEXTURE0 );
-	glBindTexture( GL_TEXTURE_2D, m_impl->fonts[font_id].atlas->id );
+	glBindTexture( GL_TEXTURE_2D, data.data->finfo.atlas->id);
 	glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    vector_t *vVector = data.data->text_vector;
+
 
 #ifdef USE_OPENGL
+    //glTranslatef(data.start_x, data.start_y, 0);
+
 	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < vVector->size / 4; ++i){
 		float vx = *((float*)vVector->items + (i * 4));
@@ -573,29 +705,15 @@ Painter::draw_text(int font_id, std::string text, int start_x, int start_y)
 	}
 	glEnd();
 #else
+	glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), text_vector->items );
+	glEnableVertexAttribArray ( m_impl->vertex_handle );
+	glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)text_vector->items+2 );
+	glEnableVertexAttribArray ( m_impl->texture_handle );
 
+	glUniform1i ( m_impl->sampler_handle, 0);
+
+	glDrawArrays ( GL_TRIANGLES, 0, text_vector->size/4 );
 #endif
-
-	vector_delete(vVector);
-}
-
-IBbox
-Painter::bound_text(int font_id, std::string text)
-{
-	vector_t * vVector = vector_new(sizeof(GLfloat));
-	Font_info finfo = m_impl->fonts[font_id];
-	IBbox box;
-
-	generate_text(finfo, text, 0, 0, vVector);
-
-	for (int i = 0; i < vVector->size / 4; ++i){
-		float vx = *((float*)vVector->items + (i * 4));
-		float vy = *((float*)vVector->items + (i * 4) + 1);
-		box.extend(int(vx), int(vy));
-	}
-
-	vector_delete(vVector);
-	return box;
 }
 
 bool

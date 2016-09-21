@@ -4,7 +4,7 @@ Label::Label(int x, int y, int width, int height, const char* name, Widget* pare
 {
 	m_halign = ALIGN_CENTERH;
 	m_valign = ALIGN_CENTERV;
-	m_label = name;
+	label(name);
 }
 
 void
@@ -17,16 +17,14 @@ Label::alignment(halign h, valign v)
 void
 Label::label(std::string l)
 {
-	m_label = l;
+	painter().build_text(m_font_id, l.c_str(), 0, 0, m_label_info);
+	dirty(true);
 }
 
 void
 Label::draw()
 {
-	if (m_label.empty())
-		return;
-
-	IBbox bound(painter().bound_text(m_font_id, m_label.c_str()));
+	IBbox bound(m_label_info.bbox);
 	int xt;
 	int yt;
 
@@ -54,6 +52,8 @@ Label::draw()
 		break;
 	}
 
-
-	painter().draw_text(m_font_id, m_label.c_str(), xt, yt);
+	push_model_matrix();
+	translate(xt, yt);
+	painter().draw_text(m_label_info);
+	pop_model_matrix();
 }

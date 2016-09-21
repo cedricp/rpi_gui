@@ -27,6 +27,7 @@ class Widget{
     bool   		m_dirty;
     WImpl*  	m_impl;
     Painter* 	m_painter;
+    std::vector<float*> m_model_matrix_stack;
     
     void add_child(Widget* w);
     void remove_child(Widget* w);
@@ -44,6 +45,7 @@ protected:
     FColor 		m_bgcolor;
     FColor 		m_fgcolor;
     int 		m_font_id;
+    Matrix		m_projection_matrix, m_model_matrix;
     void		do_callback(Widget* w, void* arg);
     void		do_callback();
     static void default_callback(Widget*, void*);
@@ -82,6 +84,10 @@ public:
     virtual void resize(int x, int y, int w, int h);
     virtual void resize(int w, int h);
 
+    void push_model_matrix();
+    void pop_model_matrix();
+    void translate(float x, float y, float z = 0.);
+    void rotate(float x, float y, float z, float angle);
     
     void hide();
     void show();
@@ -128,6 +134,7 @@ public:
     virtual void timer_event(void* data);
     virtual bool accept_drag(int x, int y);
     virtual void widget_added_event(Widget* widget);
+    virtual void init_viewport(int x, int y, int width, int height);
 
 };
 

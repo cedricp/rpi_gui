@@ -33,7 +33,9 @@ Layout::compute_layout()
 				num_children--;
 			}
 		}
-
+		if (!num_children)
+			num_children++;
+		// Avoid nasty division by zero
 		int child_size_y = (h() - total_fixed_h) / num_children;
 		int child_size_x = w();
 		int inc = 0;
@@ -57,6 +59,9 @@ Layout::compute_layout()
 				num_children--;
 			}
 		}
+
+		if (!num_children)
+			num_children++;
 
 		int child_size_y = h();
 		int child_size_x = (w() - total_fixed_w) / num_children;

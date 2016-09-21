@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <string.h>
 
 struct WImpl{
 	int		timer_id;
@@ -15,7 +16,11 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_bgcolor 	= FColor(0., 0., 0., 1.);
     m_fgcolor 	= FColor(1., 1., 1., 1.);
     
-    m_bbox = IBbox(x, x + width, y, y + height);
+    if ((width == 0 || height == 0) && parent){
+    	m_bbox = IBbox(x, x + parent->w(), y, y +  parent->h());
+    } else {
+    	m_bbox = IBbox(x, x + width, y, y + height);
+    }
 
     m_name      	= name;
     m_dirty     	= true;
@@ -25,6 +30,8 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_transparent	= false;
     m_fixed_width 	= m_fixed_height = -1;
     use_default_font();
+
+    matrix4_identity(m_model_matrix);
 
     if (parent == NULL){
         COMPOSITOR->add_widget(this);
@@ -36,6 +43,9 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
 Widget::~Widget()
 {
     delete m_impl;
+    std::vector<float*>::iterator it = m_model_matrix_stack.begin();
+    for (; it != m_model_matrix_stack.end(); ++it)
+    	delete(*it);
 }
 
 Painter&
@@ -86,6 +96,14 @@ void Widget::draw()
 #endif
 }
 
+void Widget::init_viewport(int x, int y, int width, int height)
+{
+    painter().viewport( x, y, width, height );
+    painter().create_ortho_matrix(0, width, height, 0, -1.0, 1.0, m_projection_matrix);
+    painter().load_projection_matrix(m_projection_matrix);
+    painter().load_model_matrix(m_model_matrix);
+}
+
 void Widget::internal_draw(bool force)
 {
 	if (!force){
@@ -108,16 +126,14 @@ void Widget::internal_draw(bool force)
     	return;
 
     // Start drawing stuffs
-    painter().load_identity();
-    painter().viewport( screen_bbox_corrected().xmin(), screen_bbox_corrected().ymin(), screen_bbox_corrected().width(), screen_bbox_corrected().height() );
-    painter().create_ortho_matrix(0, screen_bbox_corrected().width(), screen_bbox_corrected().height(), 0, -1.0, 1.0);
+    init_viewport(screen_bbox_corrected().xmin(), screen_bbox_corrected().ymin(), screen_bbox_corrected().width(), screen_bbox_corrected().height());
     painter().scissor_begin( bscr.xmin(), bscr.ymin(), bscr.width(), bscr.height() );
-
     if (!m_transparent)
     	painter().clear_color_buffer(m_bgcolor);
 
     painter().color(m_fgcolor);
     // Call widget custom draw method
+    painter().use_default_gles_program();
     draw();
     painter().scissor_end();
 
@@ -143,7 +159,12 @@ Widget::resize(int w, int h)
 void
 Widget::parent_resize_event(const IBbox& bbox)
 {
-
+	if(m_bbox.width() > m_parent->w()){
+		m_bbox.width(m_parent->w());
+	}
+	if (m_bbox.height() > m_parent->h()){
+		m_bbox.height(m_parent->h());
+	}
 }
 
 void
@@ -534,4 +555,42 @@ void
 Widget::widget_added_event(Widget* widget)
 {
 
+}
+
+void
+Widget::push_model_matrix()
+{
+	float* matrix = new float[16];
+	memcpy(matrix, m_model_matrix, 16*sizeof(float));
+	m_model_matrix_stack.push_back(matrix);
+}
+
+void
+Widget::pop_model_matrix()
+{
+	if (m_model_matrix_stack.empty())
+		return;
+	float* matrix = m_model_matrix_stack.back();
+	memcpy(m_model_matrix, matrix, 16*sizeof(float));
+	delete[] matrix;
+	m_model_matrix_stack.pop_back();
+	painter().load_model_matrix(m_model_matrix);
+}
+
+void
+Widget::translate(float x, float y, float z)
+{
+	Matrix pos_matrix;
+	matrix4_translate(pos_matrix, x, y);
+	matrix4_mult(m_model_matrix, pos_matrix, m_model_matrix);
+	painter().load_model_matrix(m_model_matrix);
+}
+
+void
+Widget::rotate(float x, float y, float z, float angle)
+{
+	Matrix pos_matrix;
+	matrix4_rotate(pos_matrix, x, y, z, angle * M_PI / 180.);
+	matrix4_mult(m_model_matrix, pos_matrix, m_model_matrix);
+	painter().load_model_matrix(m_model_matrix);
 }
