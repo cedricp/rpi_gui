@@ -6,7 +6,11 @@
 #include <sys/shm.h>
 
 #include <SDL2/SDL.h>
+#ifdef USE_OPENGL
 #include <GL/gl.h>
+#else
+#include <GLES2/gl2.h>
+#endif
 
 struct Impl {
 	Impl(){
@@ -64,6 +68,7 @@ Compositor::Compositor()
     }
 
     m_impl->glcontext = SDL_GL_CreateContext(m_impl->window);
+
     m_focus_drag_widget = NULL;
     m_drag_started = false;
     g_painter = new Painter;
@@ -425,19 +430,27 @@ Compositor::run()
         }
 
         if (need_update || full_update){
-            if (full_update)
+#ifdef USE_OPENGL
+        	if (full_update)
             	glDrawBuffer(GL_BACK);
             else
             	glDrawBuffer(GL_FRONT);
+#else
+
+#endif
 
         	it = m_widgets.begin();
 			for(;it != m_widgets.end();++it)
 				(*it)->update(full_update);
 
+#ifdef USE_OPENGL
 			if (full_update)
 				SDL_GL_SwapWindow(m_impl->window);
 			else
 				glFlush();
+#else
+			SDL_GL_SwapWindow(m_impl->window);
+#endif
         }
     }
 

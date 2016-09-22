@@ -8,9 +8,6 @@
 
 #include "fontlib/texture-font.h"
 
-//#undef USE_OPENGL
-
-
 #ifdef USE_OPENGL
 #include <GL/gl.h>
 #else
@@ -20,6 +17,8 @@
 #include <stdlib.h>
 #include <map>
 #include <vector>
+#include <stdio.h>
+#include <unistd.h>
 
 struct Img_info{
 	Img_info(){}
@@ -160,7 +159,7 @@ Painter::~Painter()
 #ifndef USE_OPENGL
 
 static GLuint
-load_shader(const char *shaderSrc, GLenum type)
+load_shader(GLenum type, const char *shaderSrc)
 {
 	GLuint shader;
 	GLint compiled;
@@ -184,9 +183,9 @@ load_shader(const char *shaderSrc, GLenum type)
 
 		if(infoLen > 1)
 		{
-			char* infoLog = malloc(sizeof(char) * infoLen);
+			char* infoLog = (char*)malloc(sizeof(char) * infoLen);
 			glGetShaderInfoLog(shader, infoLen, NULL, infoLog);
-			esLogMessage("Error compiling shader:\n%s\n", infoLog);
+			printf("Error compiling shader:\n%s\n", infoLog);
 			free(infoLog);
 		}
 		glDeleteShader(shader);
@@ -579,7 +578,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 
 		glUniform1i ( m_impl->sampler_handle, 0);
 
-		glDrawArrays ( TRIANGLES, 0, 6 );
+		glDrawArrays ( GL_TRIANGLES, 0, 6 );
 	}
 #endif
 }
@@ -671,8 +670,6 @@ Painter::draw_text(const Text_data& data)
 
 
 #ifdef USE_OPENGL
-    //glTranslatef(data.start_x, data.start_y, 0);
-
 	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < vVector->size / 4; ++i){
 		float vx = *((float*)vVector->items + (i * 4));
@@ -685,14 +682,14 @@ Painter::draw_text(const Text_data& data)
 	glEnd();
 #else
 	glUseProgram(m_impl->program_handle);
-	glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), text_vector->items );
+	glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
 	glEnableVertexAttribArray ( m_impl->vertex_handle );
-	glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)text_vector->items+2 );
+	glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
 	glEnableVertexAttribArray ( m_impl->texture_handle );
 
 	glUniform1i ( m_impl->sampler_handle, 0);
 
-	glDrawArrays ( GL_TRIANGLES, 0, text_vector->size/4 );
+	glDrawArrays ( GL_TRIANGLES, 0, vVector->size/4 );
 #endif
 }
 
