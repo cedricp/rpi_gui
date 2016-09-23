@@ -553,6 +553,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 	float yy = y;
 	float ww = width;
 	float hh = height;
+	glDisable(GL_CULL_FACE);
 
 	glUseProgram(m_impl->program_handle);
 	if (!fill){
@@ -688,6 +689,7 @@ Painter::draw_text(const Text_data& data)
 	glEnd();
 #else
 	glUseProgram(m_impl->program_handle);
+	glDisable(GL_CULL_FACE);
 	glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
 	glEnableVertexAttribArray ( m_impl->vertex_handle );
 	glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );

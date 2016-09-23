@@ -418,6 +418,11 @@ Compositor::run()
         case SDL_QUIT:
             quit = true;
             break;
+        case SDL_KEYDOWN:
+        	if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
+        		quit = true;
+        	}
+        	break;
         case SDL_MOUSEBUTTONUP:
         	need_update = handle_mouse_button_event(event.button.button, false);
             break;
