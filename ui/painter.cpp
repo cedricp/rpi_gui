@@ -145,10 +145,11 @@ Painter::Painter()
 {
 	m_impl = new PImpl;
 	std::string font_file;
-	if( locate_resource("custom.ttf", font_file) ){
+	std::string font_name = "custom.ttf";
+	if( locate_resource(font_name, font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 14);
 	} else {
-		std::cerr << "Painter::Painter : cannot initialize default fonts" << std::endl;
+		std::cerr << "Painter::Painter : cannot initialize default fonts " << font_name <<  " at " << font_file << std::endl;
 	}
 }
 
@@ -361,11 +362,16 @@ Painter::color(const FColor& c)
 char*
 Painter::load_svg_image(std::string filename, int &w, int &h)
 {
+	std::string fullpath;
+	if (!locate_resource(filename, fullpath)){
+		fullpath = filename;
+	}
+
 	NSVGimage *image = NULL;
 	NSVGrasterizer *rast = NULL;
 	unsigned char* img = NULL;
 
-	image = nsvgParseFromFile(filename.c_str(), "px", 96.0f);
+	image = nsvgParseFromFile(fullpath.c_str(), "px", 96.0f);
 	if ( image == NULL )
 		return NULL;
 
@@ -573,7 +579,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 
 		glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
 		glEnableVertexAttribArray ( m_impl->vertex_handle );
-		glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data)+2 );
+		glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
 		glEnableVertexAttribArray ( m_impl->texture_handle );
 
 		glUniform1i ( m_impl->sampler_handle, 0);
@@ -703,7 +709,8 @@ Painter::locate_resource(std::string name, std::string &path)
 	}
 
 	std::string resource_path = std::string(resource_env) + "/resources/" + name;
-	if( access( resource_path.c_str(), F_OK ) != -1 ) {
+
+	if( access( resource_path.c_str(), F_OK ) == 0 ) {
 		path = resource_path;
 		return true;
 	}

@@ -44,8 +44,22 @@ Uint32 timerCallback(Uint32 interval, void *param)
 Compositor::Compositor()
 {
     m_impl = new Impl;
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+    m_curr_mousex = m_curr_mousey = m_drag_x = m_drag_y = 0;
+    int sdl_status =  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
+    if (sdl_status != 0){
+    	fprintf(stderr, "\nUnable to initialize SDL: %i %s\n", sdl_status, SDL_GetError() );
+        exit(1);
+    }
 
+
+#ifdef USE_OPENGL
+	Uint32 flags = SDL_WINDOW_OPENGL;
+#else
+	Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN;
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+#endif
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //double buffering on obviously
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -53,14 +67,15 @@ Compositor::Compositor()
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
+
     m_impl->window = SDL_CreateWindow(
         "GUI",                  // window title
         SDL_WINDOWPOS_UNDEFINED,           // initial x position
         SDL_WINDOWPOS_UNDEFINED,           // initial y position
-        640,                               // width, in pixels
-        480,                               // height, in pixels
-        SDL_WINDOW_OPENGL
-    ); // SDL_WINDOW_FULLSCREEN
+        800,                               // width, in pixels
+        600,                               // height, in pixels
+		flags
+    );
 
     if (m_impl->window == NULL) {
         std::cerr << "Cannot create OpenGL(ES) window, aborting : " << SDL_GetError() << std::endl;
