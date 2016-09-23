@@ -11,15 +11,19 @@
 CROSSGCC_ROOT=/sources/RPI/RPI_DEV/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin
 
 # Path to your raspbian distro directory
+
+# If you're cross compiling, you likely want to change the 2 lines above
 SYSROOT=/sources/RPI/RPI_DEV/deb_root
-SDL_ROOT_X86=/sources/RTL/RADIO/INSTALL
 SDL_ROOT_CROSSPI=/sources/RPI/RPI_DEV/INSTALL
+# If you're builing for a X86 on a X86 :)
+SDL_ROOT_X86=/sources/RTL/RADIO/INSTALL
+# If you're compiling from the PI
+SDL_ROOT_PI=/home/cedric/DEV/ROOT_INSTALL
 
 ###########################################################################################
 
 ifndef BUILD
 $(error Variable BUILD not specified use BUILD=X86 or BUILD=CROSSPI)
-PLATFORM=X86
 endif
 
 SRC_ROOT_DIR=$(shell pwd)
@@ -44,8 +48,18 @@ LIB_GLES2_CXXFLAGS=-I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/opt/vc/include/inter
 
 LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
 LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
+$(warning Building ARM cross compilation code for raspberrypi EGL - GLES2)
+else ifeq ($(BUILD),PI)
+LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
+LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_PI)/include
+
+LIB_GLES2_LDFLAGS=-L/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
+LIB_GLES2_CXXFLAGS=-I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/
+
+LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
+LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
 $(warning Building ARM code for raspberrypi EGL - GLES2)
-else
+else ifeq ($(BUILD),X86)
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_X86)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_X86)/include
 
