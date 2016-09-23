@@ -46,10 +46,16 @@ LIB_GLES2_CXXFLAGS=-I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/opt/vc/include/inter
 
 LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
 LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
+
+LIB_FREETYPE2_LDFLAGS=-lfreetype
+LIB_FREETYPE2_CXXFLAGS=-I$(SYSROOT)/usr/include/freetype2
 $(warning Building ARM cross compilation code for raspberrypi EGL - GLES2)
 else
 ifeq ($(BUILD),PI)
 PLATFORM=RPI
+LIB_FREETYPE2_LDFLAGS=-lfreetype
+LIB_FREETYPE2_CXXFLAGS=-I/usr/include/freetype2
+
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_PI)/include
 
@@ -61,6 +67,9 @@ LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
 $(warning Building ARM code for raspberrypi EGL - GLES2)
 else
 ifeq ($(BUILD),X86)
+LIB_FREETYPE2_LDFLAGS=-lfreetype
+LIB_FREETYPE2_CXXFLAGS=-I/usr/include/freetype2
+
 PLATFORM=X86
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_X86)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_X86)/include
@@ -78,10 +87,6 @@ INSTALL_RESOURCES_DIR=$(INSTALL_DIR)/resources
 OBJECTS_DIR=$(INSTALL_DIR)/.objs
 INSTALL_LIB_DIR=$(INSTALL_DIR)/lib
 BIN_DIR=$(INSTALL_DIR)/bin
-
-
-LIB_FREETYPE2_LDFLAGS=-lfreetype
-LIB_FREETYPE2_CXXFLAGS=-I$(SYSROOT)/usr/include/freetype2
 
 # Globals
 GLOBAL_CXX_FLAGS+=-D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS)
