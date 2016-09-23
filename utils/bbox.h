@@ -23,12 +23,12 @@ public:
     
     T width() const {
     	T w = x_max - x_min;
-        return w > 0 ? w : 0;
+        return w < 0 ? 0 : w;
     }
     
     T height()  const {
     	T h = y_max - y_min;
-        return h > 0 ? h : 0;
+        return h < 0 ? 0 : h;
     }
     
     void width(T w){

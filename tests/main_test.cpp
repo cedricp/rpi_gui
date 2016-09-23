@@ -12,7 +12,7 @@ int main(int argn, char** args)
     Scroll* scroll = new Scroll(100, 100, 200, 100, "SCROLL", parent);
 
     Layout* layout = new Layout(0, 0, 200, 200, "Child", scroll, LAYOUT_VERTICAL);
-    Slider* sld = new Slider(0, 0, 60, 60, "Label test >>>", layout);
+    Slider* sld = new Slider(0, 0, 60, 60, "Slider", layout);
     Label* lbl = new Label(0, 0, 60, 60, "Label test >>>", layout);
     Button* button = new Button(0, 0, 60, 60, "Button #1", layout);
     Button* button2 = new Button(0, 0, 60, 60, "Button #2", layout);

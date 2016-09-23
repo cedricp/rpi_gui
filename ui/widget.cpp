@@ -122,8 +122,9 @@ void Widget::internal_draw(bool force)
     }
 
     // Widget is outside parent bounds
-    if (bscr.width() == 0 && bscr.height() == 0)
+    if (bscr.width() == 0 || bscr.height() == 0){
     	return;
+    }
 
     // Start drawing stuffs
     init_viewport(screen_bbox_corrected().xmin(), screen_bbox_corrected().ymin(), screen_bbox_corrected().width(), screen_bbox_corrected().height());
