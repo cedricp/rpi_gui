@@ -27,11 +27,9 @@ $(error Variable BUILD not specified use BUILD=X86 or BUILD=CROSSPI)
 endif
 
 SRC_ROOT_DIR=$(shell pwd)
-INSTALL_DIR=$(SRC_ROOT_DIR)/BUILD
-INSTALL_RESOURCES_DIR=$(INSTALL_DIR)/resources
 
 ifeq ($(BUILD),CROSSPI)
-PLATFORM=RPI
+PLATFORM=RPI_CROSS
 CC=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-gcc-4.8.3
 CXX=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-g++
 AR=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-ar
@@ -49,7 +47,9 @@ LIB_GLES2_CXXFLAGS=-I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/opt/vc/include/inter
 LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
 LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
 $(warning Building ARM cross compilation code for raspberrypi EGL - GLES2)
-else ifeq ($(BUILD),PI)
+else
+ifeq ($(BUILD),PI)
+PLATFORM=RPI
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_PI)/include
 
@@ -59,7 +59,9 @@ LIB_GLES2_CXXFLAGS=-I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/
 LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
 LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
 $(warning Building ARM code for raspberrypi EGL - GLES2)
-else ifeq ($(BUILD),X86)
+else
+ifeq ($(BUILD),X86)
+PLATFORM=X86
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_X86)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_X86)/include
 
@@ -67,6 +69,11 @@ LIB_GL_LDFLAGS=-lGL -lGLU
 LIB_GL_CXXFLAGS=-I/usr/inlcude -DUSE_OPENGL=1
 $(warning Building X86 code X11 GLX)
 endif
+endif
+endif
+
+INSTALL_DIR=$(SRC_ROOT_DIR)/BUILD_$(PLATFORM)
+INSTALL_RESOURCES_DIR=$(INSTALL_DIR)/resources
 
 OBJECTS_DIR=$(INSTALL_DIR)/.objs
 INSTALL_LIB_DIR=$(INSTALL_DIR)/lib
