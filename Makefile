@@ -38,7 +38,7 @@ INSTALL_DIR=$(SRC_ROOT_DIR)/BUILD_RPI
 GLOBAL_CXX_FLAGS+=--sysroot=$(SYSROOT) -I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/usr/include
 GLOBAL_LD_FLAGS+=--sysroot=$(SYSROOT) -L$(SYSROOT)/usr/lib -L$(SYSROOT)/usr/lib/arm-linux-gnueabihf
 
-LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_CROSSPI)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
+LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_CROSSPI)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_CROSSPI)/include
 
 LIB_GLES2_LDFLAGS=-L$(SYSROOT)/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
@@ -56,7 +56,7 @@ PLATFORM=RPI
 LIB_FREETYPE2_LDFLAGS=-lfreetype
 LIB_FREETYPE2_CXXFLAGS=-I/usr/include/freetype2
 
-LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
+LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_PI)/include
 
 LIB_GLES2_LDFLAGS=-L/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
@@ -71,7 +71,7 @@ LIB_FREETYPE2_LDFLAGS=-lfreetype
 LIB_FREETYPE2_CXXFLAGS=-I/usr/include/freetype2
 
 PLATFORM=X86
-LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_X86)/lib -Wl,-Bstatic -lSDL2 -lSDL2main -Wl,-Bdynamic
+LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_X86)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_X86)/include
 
 LIB_GL_LDFLAGS=-lGL -lGLU

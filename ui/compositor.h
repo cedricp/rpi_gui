@@ -46,6 +46,7 @@ public:
     int    	screen_width();
     int 	run();
     void	mouse_position(int &x, int &y);
+    void 	finish();
 };
 
 #define COMPOSITOR Compositor::get_singleton()

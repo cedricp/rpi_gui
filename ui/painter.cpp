@@ -144,12 +144,13 @@ void generate_text(Text_data& td)
 Painter::Painter()
 {
 	m_impl = new PImpl;
+	init_gles2();
 	std::string font_file;
 	std::string font_name = "custom.ttf";
 	if( locate_resource(font_name, font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 14);
 	} else {
-		std::cerr << "Painter::Painter : cannot initialize default fonts " << font_name <<  " at " << font_file << std::endl;
+		std::cerr << "Painter::Painter : cannot initialize default fonts " << font_name << std::endl;
 	}
 }
 
@@ -558,9 +559,9 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 	glUseProgram(m_impl->program_handle);
 	if (!fill){
 		GLfloat gl_data[] = {  xx, yy, 0., 0.,
-							   xx, hh, 0., 1.,
-							   ww, hh, 1., 1.,
-							   ww, yy, 1., 0.};
+			               xx, hh, 0., 1.,
+				       ww, hh, 1., 1.,
+				       ww, yy, 1., 0.};
 
 		glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
 		glEnableVertexAttribArray ( m_impl->vertex_handle );
@@ -671,9 +672,9 @@ Painter::draw_text(const Text_data& data)
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, data.data->finfo.atlas->id);
 	glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    vector_t *vVector = data.data->text_vector;
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	vector_t *vVector = data.data->text_vector;
 
 
 #ifdef USE_OPENGL

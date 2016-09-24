@@ -45,7 +45,7 @@ Compositor::Compositor()
 {
     m_impl = new Impl;
     m_curr_mousex = m_curr_mousey = m_drag_x = m_drag_y = 0;
-    int sdl_status =  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
+    int sdl_status =  SDL_Init(SDL_INIT_VIDEO);
     if (sdl_status != 0){
     	fprintf(stderr, "\nUnable to initialize SDL: %i %s\n", sdl_status, SDL_GetError() );
         exit(1);
@@ -60,12 +60,12 @@ Compositor::Compositor()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 #endif
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //double buffering on obviously
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	//SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //double buffering on obviously
+	//SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
+	//SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
+	//SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
+	//SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 5);
+	//SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
 
     m_impl->window = SDL_CreateWindow(
@@ -74,15 +74,20 @@ Compositor::Compositor()
         SDL_WINDOWPOS_UNDEFINED,           // initial y position
         800,                               // width, in pixels
         600,                               // height, in pixels
-		flags
+	flags
     );
 
     if (m_impl->window == NULL) {
         std::cerr << "Cannot create OpenGL(ES) window, aborting : " << SDL_GetError() << std::endl;
-        exit(1);
+        finish();
+        exit(-1);
     }
 
     m_impl->glcontext = SDL_GL_CreateContext(m_impl->window);
+    if (m_impl->glcontext == NULL){
+        finish();
+        exit(-1);
+    }
 
     m_focus_drag_widget = NULL;
     m_drag_started = false;
@@ -91,7 +96,18 @@ Compositor::Compositor()
 
 Compositor::~Compositor()
 {
+    finish();
     delete m_impl;
+}
+
+void
+Compositor::finish()
+{
+    if(m_impl->glcontext)
+        SDL_GL_DeleteContext(m_impl->glcontext);  
+    if(m_impl->window)
+        SDL_DestroyWindow(m_impl->window);
+    SDL_Quit();
 }
 
 Painter&
@@ -398,11 +414,12 @@ Compositor::run()
 
 	SDL_GL_SwapWindow(m_impl->window);
     bool quit = false;
-    
+
     while(!quit) {
-    	bool full_update = false;
+   	bool full_update = false;
     	bool need_update = false;
         SDL_WaitEvent(&event);
+	//SDL_PollEvent(&event);
         int windowID = SDL_GetWindowID(m_impl->window);
         
         switch(event.type){
@@ -477,9 +494,7 @@ Compositor::run()
     for(it = m_widgets.begin(); it != m_widgets.end();++it)
     	(*it)->destroy_children();
 
-    SDL_GL_DeleteContext(m_impl->glcontext);  
-    SDL_DestroyWindow(m_impl->window);
-    SDL_Quit();
+    finish();
     return 0;
 }
 
