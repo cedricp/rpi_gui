@@ -613,8 +613,8 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 	float hh = height;
 	glDisable(GL_CULL_FACE);
 
-	glUseProgram(m_impl->solid_program.program_handle);
 	if (!fill){
+         	glUseProgram(m_impl->solid_program.program_handle);
 		GLfloat gl_data[] = {  xx, yy, 0., 0.,
 			               	   xx, hh, 0., 1.,
 							   ww, hh, 1., 1.,
@@ -627,6 +627,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 
 		glDrawArrays ( GL_LINE_LOOP, 0, 4 );
 	} else {
+                glUseProgram(m_impl->texture_program.program_handle);
 		GLfloat gl_data[] = {  xx, yy, 0., 0.,
 							   xx, hh, 0., 1.,
 							   ww, yy, 1., 0.,
