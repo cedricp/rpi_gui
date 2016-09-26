@@ -41,6 +41,18 @@ Uint32 timerCallback(Uint32 interval, void *param)
   return interval;
 }
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    const unsigned int  rmask = 0xff000000;
+    const unsigned int  gmask = 0x00ff0000;
+    const unsigned int  bmask = 0x0000ff00;
+    const unsigned int  amask = 0x000000ff;
+#else
+    const unsigned int  rmask = 0x000000ff;
+    const unsigned int  gmask = 0x0000ff00;
+    const unsigned int  bmask = 0x00ff0000;
+    const unsigned int  amask = 0xff000000;
+#endif
+
 Compositor::Compositor()
 {
     m_impl = new Impl;
@@ -89,7 +101,19 @@ Compositor::Compositor()
         exit(-1);
     }
 
-    SDL_GL_SetSwapInterval(0);
+    SDL_GL_SetSwapInterval(1);
+
+//    std::string cursor_path;
+//    if (!painter().locate_resource("cross.bmp", cursor_path)){
+//    	std::cerr << "Compositor::Compositor() : Cannot load cursor" << std::endl;
+//    }
+//	SDL_Surface* cursor_cross_surface = SDL_LoadBMP(cursor_path.c_str());
+//	if (!cursor_cross_surface){
+//		std::cerr << SDL_GetError() << std::endl;
+//	}
+//	SDL_Cursor* cursor_cross = SDL_CreateColorCursor(cursor_cross_surface, 0, 0);
+//	std::cout << cursor_cross_surface << std::endl;
+//	SDL_SetCursor(cursor_cross);
 
     m_focus_drag_widget = NULL;
     m_drag_started = false;
@@ -418,61 +442,61 @@ Compositor::run()
     bool quit = false;
 
     while(!quit) {
-   	bool full_update = false;
+    	bool full_update = false;
     	bool need_update = false;
+
         SDL_WaitEvent(&event);
         int windowID = SDL_GetWindowID(m_impl->window);
-        
-        switch(event.type){
-        case SDL_USEREVENT:
-        	switch (event.user.code){
-        	case TIMER_EVENT:
-        		((Widget*)event.user.data1)->timer_event(event.user.data2);
-        		break;
-        	default:
-        		break;
-        	}
-        	break;
-        case SDL_QUIT:
-            quit = true;
-            break;
-        case SDL_KEYDOWN:
-        	if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
-        		quit = true;
-        	}
-        	break;
-        case SDL_MOUSEBUTTONUP:
-        	need_update = handle_mouse_button_event(event.button.button, false);
-            break;
-        case SDL_MOUSEBUTTONDOWN:
-        	need_update = handle_mouse_button_event(event.button.button, true);
-            break;
-        case SDL_MOUSEWHEEL:
-        	need_update = handle_mouse_wheel_event(event.wheel.y);
-            break;
-        case SDL_MOUSEMOTION:
-        	need_update = handle_mouse_move_event(event.motion.x, event.motion.y);
-            break;
-        case SDL_WINDOWEVENT:
-            if (event.window.windowID == windowID)  {
-                switch(event.window.event) {
-                case SDL_WINDOWEVENT_EXPOSED:
-                case SDL_WINDOWEVENT_RESTORED:
-                case SDL_WINDOWEVENT_SHOWN:
-                case SDL_WINDOWEVENT_ENTER:
-                	full_update = true;
-                default:
-                    break;
-                }   
-           }     
-        }
+
+        do{
+			switch(event.type){
+			case SDL_USEREVENT:
+				switch (event.user.code){
+				case TIMER_EVENT:
+					((Widget*)event.user.data1)->timer_event(event.user.data2);
+					break;
+				default:
+					break;
+				}
+				break;
+			case SDL_QUIT:
+				quit = true;
+				break;
+			case SDL_KEYDOWN:
+				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
+					quit = true;
+				}
+				break;
+			case SDL_MOUSEBUTTONUP:
+				need_update |= handle_mouse_button_event(event.button.button, false);
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				need_update |= handle_mouse_button_event(event.button.button, true);
+				break;
+			case SDL_MOUSEWHEEL:
+				need_update |= handle_mouse_wheel_event(event.wheel.y);
+				break;
+			case SDL_MOUSEMOTION:
+				need_update |= handle_mouse_move_event(event.motion.x, event.motion.y);
+				break;
+			case SDL_WINDOWEVENT:
+				if (event.window.windowID == windowID)  {
+					switch(event.window.event) {
+					case SDL_WINDOWEVENT_EXPOSED:
+					case SDL_WINDOWEVENT_RESTORED:
+					case SDL_WINDOWEVENT_SHOWN:
+					case SDL_WINDOWEVENT_ENTER:
+						full_update |= true;
+					default:
+						break;
+					}
+			   }
+			}
+        } while (SDL_PollEvent(&event) != 0); // Pump events before drawing
 
         if (need_update || full_update){
 #ifdef USE_OPENGL
-        	if (full_update)
-            	glDrawBuffer(GL_BACK);
-            else
-            	glDrawBuffer(GL_FRONT);
+        	full_update = true;
 #else
 
 #endif
@@ -481,14 +505,7 @@ Compositor::run()
 			for(;it != m_widgets.end();++it)
 				(*it)->update(full_update);
 
-#ifdef USE_OPENGL
-			if (full_update)
-				SDL_GL_SwapWindow(m_impl->window);
-		else
-				glFlush();
-#else
 			SDL_GL_SwapWindow(m_impl->window);
-#endif
         }
     }
 

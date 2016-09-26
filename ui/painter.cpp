@@ -59,8 +59,6 @@ struct FontImpl{
 	Font_info finfo;
 };
 
-//#undef USE_OPENGL
-
 #ifndef USE_OPENGL
 struct gl_program
 {
@@ -210,24 +208,30 @@ load_shader(GLenum type, const char *shaderSrc)
 void
 Painter::init_gles2()
 {
-	GLuint vertex_shader 		= load_shader(GL_VERTEX_SHADER, vertex_shader_src);
-	GLuint vertex_shader_simple	= load_shader(GL_VERTEX_SHADER, vertex_shader_src);
-	GLuint fragment_shader 		= load_shader(GL_FRAGMENT_SHADER, frag_shader_src);
-	GLuint fragment_shader_font = load_shader(GL_FRAGMENT_SHADER, frag_shader_font_src);
+	GLuint vertex_shader 		 = load_shader(GL_VERTEX_SHADER, vertex_shader_src);
+	GLuint vertex_shader_simple	 = load_shader(GL_VERTEX_SHADER, vertex_shader_src);
+	GLuint fragment_shader 		 = load_shader(GL_FRAGMENT_SHADER, frag_shader_src);
+	GLuint fragment_shader_font  = load_shader(GL_FRAGMENT_SHADER, frag_shader_font_src);
 	GLuint fragment_shader_solid = load_shader(GL_FRAGMENT_SHADER, frag_shader_solid_src);
 
 	m_impl->texture_program.program_handle 	= glCreateProgram();
 	m_impl->font_program.program_handle 	= glCreateProgram();
 	m_impl->solid_program.program_handle 	= glCreateProgram();
 
-	if(m_impl->texture_program.program_handle== 0)
+	if(m_impl->texture_program.program_handle== 0){
+		std::cerr << "Painter::init_gles2() : Cannot create program 'texture'" << std::endl;
 		return;
+	}
 
-	if(m_impl->font_program.program_handle== 0)
+	if(m_impl->font_program.program_handle== 0){
+		std::cerr << "Painter::init_gles2() : Cannot create program 'font'" << std::endl;
 		return;
+	}
 
-	if(m_impl->solid_program.program_handle== 0)
+	if(m_impl->solid_program.program_handle== 0){
+		std::cerr << "Painter::init_gles2() : Cannot create program 'solid'" << std::endl;
 		return;
+	}
 
 	// Normal texture shader
 	glAttachShader(m_impl->texture_program.program_handle, vertex_shader);
@@ -237,10 +241,10 @@ Painter::init_gles2()
 
 	m_impl->texture_program.matrix_projection 	= glGetUniformLocation(m_impl->texture_program.program_handle, "mvp");
 	m_impl->texture_program.matrix_model 		= glGetUniformLocation(m_impl->texture_program.program_handle, "xform");
-	m_impl->texture_program.vertex_handle  	= glGetAttribLocation ( m_impl->texture_program.program_handle, "position" );
-	m_impl->texture_program.texture_handle 	= glGetAttribLocation ( m_impl->texture_program.program_handle, "st" );
-	m_impl->texture_program.sampler_handle  = glGetUniformLocation( m_impl->texture_program.program_handle, "texture_uniform" );
-	m_impl->texture_program.color_handler	= glGetUniformLocation( m_impl->texture_program.program_handle, "ucolor" );
+	m_impl->texture_program.vertex_handle  		= glGetAttribLocation (m_impl->texture_program.program_handle, "position" );
+	m_impl->texture_program.texture_handle 		= glGetAttribLocation (m_impl->texture_program.program_handle, "st" );
+	m_impl->texture_program.sampler_handle  	= glGetUniformLocation(m_impl->texture_program.program_handle, "texture_uniform" );
+	m_impl->texture_program.color_handler		= glGetUniformLocation(m_impl->texture_program.program_handle, "ucolor" );
 
 
 	// Font (alpha) texture shader
@@ -251,10 +255,10 @@ Painter::init_gles2()
 
 	m_impl->font_program.matrix_projection 	= glGetUniformLocation(m_impl->font_program.program_handle, "mvp");
 	m_impl->font_program.matrix_model 		= glGetUniformLocation(m_impl->font_program.program_handle, "xform");
-	m_impl->font_program.vertex_handle  = glGetAttribLocation ( m_impl->font_program.program_handle, "position" );
-	m_impl->font_program.texture_handle = glGetAttribLocation ( m_impl->font_program.program_handle, "st" );
-	m_impl->font_program.sampler_handle = glGetUniformLocation( m_impl->font_program.program_handle, "texture_uniform" );
-	m_impl->font_program.color_handler	= glGetUniformLocation( m_impl->font_program.program_handle, "ucolor" );
+	m_impl->font_program.vertex_handle  	= glGetAttribLocation (m_impl->font_program.program_handle, "position" );
+	m_impl->font_program.texture_handle 	= glGetAttribLocation (m_impl->font_program.program_handle, "st" );
+	m_impl->font_program.sampler_handle	 	= glGetUniformLocation(m_impl->font_program.program_handle, "texture_uniform" );
+	m_impl->font_program.color_handler		= glGetUniformLocation(m_impl->font_program.program_handle, "ucolor" );
 
 	// Solid texture shader
 	glAttachShader(m_impl->solid_program.program_handle, vertex_shader_simple);
@@ -262,11 +266,10 @@ Painter::init_gles2()
 
 	glLinkProgram(m_impl->solid_program.program_handle);
 
-	m_impl->solid_program.matrix_projection 	= glGetUniformLocation(m_impl->solid_program.program_handle, "mvp");
+	m_impl->solid_program.matrix_projection = glGetUniformLocation(m_impl->solid_program.program_handle, "mvp");
 	m_impl->solid_program.matrix_model 		= glGetUniformLocation(m_impl->solid_program.program_handle, "xform");
-	m_impl->solid_program.vertex_handle  = glGetAttribLocation ( m_impl->solid_program.program_handle, "position" );
-	m_impl->solid_program.color_handler	= glGetUniformLocation( m_impl->solid_program.program_handle,  "ucolor" );
-
+	m_impl->solid_program.vertex_handle  	= glGetAttribLocation (m_impl->solid_program.program_handle, "position" );
+	m_impl->solid_program.color_handler		= glGetUniformLocation(m_impl->solid_program.program_handle,  "ucolor" );
 }
 #endif
 
@@ -280,7 +283,7 @@ void
 Painter::use_default_gles_program()
 {
 #ifndef USE_OPENGL
-	glUseProgram(m_impl->program_handle);
+	glUseProgram(m_impl->texture_program.program_handle);
 #endif
 }
 
