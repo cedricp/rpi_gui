@@ -1,9 +1,11 @@
 #include "compositor.h"
 #include "widget.h"
+#include "cursors/cross_cursor.h"
 
 #include <iostream>
 #include <algorithm>
 #include <sys/shm.h>
+#include <map>
 
 #include <SDL2/SDL.h>
 #ifdef USE_OPENGL
@@ -22,6 +24,7 @@ struct Impl {
     SDL_Window 		*window;
     SDL_GLContext 	glcontext;
     Widget			*widget_under_mouse;
+    std::map<int, SDL_Cursor*> cursors;
 };
 
 static Compositor *GLOBAL_COMPOSITOR = NULL;
@@ -72,7 +75,8 @@ Compositor::Compositor()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 #endif
-	//SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //double buffering on obviously
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); //double buffering on obviously
+
 	//SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
 	//SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
 	//SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
@@ -86,7 +90,7 @@ Compositor::Compositor()
         SDL_WINDOWPOS_UNDEFINED,           // initial y position
         800,                               // width, in pixels
         600,                               // height, in pixels
-	flags
+		flags
     );
 
     if (m_impl->window == NULL) {
@@ -103,17 +107,10 @@ Compositor::Compositor()
 
     SDL_GL_SetSwapInterval(1);
 
-//    std::string cursor_path;
-//    if (!painter().locate_resource("cross.bmp", cursor_path)){
-//    	std::cerr << "Compositor::Compositor() : Cannot load cursor" << std::endl;
-//    }
-//	SDL_Surface* cursor_cross_surface = SDL_LoadBMP(cursor_path.c_str());
-//	if (!cursor_cross_surface){
-//		std::cerr << SDL_GetError() << std::endl;
-//	}
-//	SDL_Cursor* cursor_cross = SDL_CreateColorCursor(cursor_cross_surface, 0, 0);
-//	std::cout << cursor_cross_surface << std::endl;
-//	SDL_SetCursor(cursor_cross);
+    std::string cursor_path;
+    if (!painter().locate_resource("cross.bmp", cursor_path)){
+    	std::cerr << "Compositor::Compositor() : Cannot load cursor" << std::endl;
+    }
 
     m_focus_drag_widget = NULL;
     m_drag_started = false;
@@ -124,6 +121,23 @@ Compositor::~Compositor()
 {
     finish();
     delete m_impl;
+}
+
+void
+Compositor::create_cursors()
+{
+	SDL_Surface* cursor_cross_surface = SDL_CreateRGBSurfaceFrom(gimp_image_cross.pixel_data, gimp_image_cross.width,
+										gimp_image_cross.height, gimp_image_cross.bytes_per_pixel * 8,
+										gimp_image_cross.bytes_per_pixel * gimp_image_cross.width, rmask, gmask, bmask, amask);
+	SDL_Cursor* cursor_cross = SDL_CreateColorCursor(cursor_cross_surface, 0, 0);
+
+	m_impl->cursors[CURSOR_CROSS] = cursor_cross;
+	m_impl->cursors[CURSOR_ARROW] = NULL;
+}
+
+void
+Compositor::set_cursor(Compositor_cursors cursor){
+	SDL_SetCursor(m_impl->cursors[cursor]);
 }
 
 void
@@ -498,7 +512,7 @@ Compositor::run()
 #ifdef USE_OPENGL
         	full_update = true;
 #else
-
+        	// Back buffer should be clean (modified SDL with GL_PRESERVE_BUFFER)
 #endif
 
         	it = m_widgets.begin();

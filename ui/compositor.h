@@ -12,6 +12,11 @@ enum custom_events{
 	USER_EVENT
 };
 
+enum Compositor_cursors {
+	CURSOR_ARROW,
+	CURSOR_CROSS
+};
+
 
 class Compositor {
     std::vector<Widget*> m_widgets;
@@ -26,6 +31,7 @@ class Compositor {
     void resize_widget_to_window(Widget*);
     void* create_shm(int key, size_t size);
     void* get_shm(int key, size_t size);
+    void create_cursors();
 
 public:
     Compositor();
@@ -47,6 +53,7 @@ public:
     int 	run();
     void	mouse_position(int &x, int &y);
     void 	finish();
+    void	set_cursor(Compositor_cursors c);
 };
 
 #define COMPOSITOR Compositor::get_singleton()
