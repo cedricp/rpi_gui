@@ -235,9 +235,8 @@ Painter::init_gles2()
 
 	glLinkProgram(m_impl->texture_program.program_handle);
 
-	m_impl->texture_program.matrix_projection 	= glGetUniformLocation(m_impl->program_handle, "mvp");
-	m_impl->texture_program.matrix_model 		= glGetUniformLocation(m_impl->program_handle, "xform");
-
+	m_impl->texture_program.matrix_projection 	= glGetUniformLocation(m_impl->texture_program.program_handle, "mvp");
+	m_impl->texture_program.matrix_model 		= glGetUniformLocation(m_impl->texture_program.program_handle, "xform");
 	m_impl->texture_program.vertex_handle  	= glGetAttribLocation ( m_impl->texture_program.program_handle, "position" );
 	m_impl->texture_program.texture_handle 	= glGetAttribLocation ( m_impl->texture_program.program_handle, "st" );
 	m_impl->texture_program.sampler_handle  = glGetUniformLocation( m_impl->texture_program.program_handle, "texture_uniform" );
@@ -250,6 +249,8 @@ Painter::init_gles2()
 
 	glLinkProgram(m_impl->font_program.program_handle);
 
+	m_impl->font_program.matrix_projection 	= glGetUniformLocation(m_impl->font_program.program_handle, "mvp");
+	m_impl->font_program.matrix_model 		= glGetUniformLocation(m_impl->font_program.program_handle, "xform");
 	m_impl->font_program.vertex_handle  = glGetAttribLocation ( m_impl->font_program.program_handle, "position" );
 	m_impl->font_program.texture_handle = glGetAttribLocation ( m_impl->font_program.program_handle, "st" );
 	m_impl->font_program.sampler_handle = glGetUniformLocation( m_impl->font_program.program_handle, "texture_uniform" );
@@ -261,6 +262,8 @@ Painter::init_gles2()
 
 	glLinkProgram(m_impl->solid_program.program_handle);
 
+	m_impl->solid_program.matrix_projection 	= glGetUniformLocation(m_impl->solid_program.program_handle, "mvp");
+	m_impl->solid_program.matrix_model 		= glGetUniformLocation(m_impl->solid_program.program_handle, "xform");
 	m_impl->solid_program.vertex_handle  = glGetAttribLocation ( m_impl->solid_program.program_handle, "position" );
 	m_impl->solid_program.color_handler	= glGetUniformLocation( m_impl->solid_program.program_handle,  "ucolor" );
 
@@ -353,7 +356,9 @@ Painter::load_projection_matrix(Matrix matrix)
 	glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(matrix);
 #else
-    glUniformMatrix4fv(m_impl->matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
+    glUniformMatrix4fv(m_impl->texture_program.matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
+    glUniformMatrix4fv(m_impl->font_program.matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
+    glUniformMatrix4fv(m_impl->solid_program.matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
 
@@ -364,7 +369,9 @@ Painter::load_model_matrix(Matrix matrix)
 	glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(matrix);
 #else
-    glUniformMatrix4fv(m_impl->matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
+    glUniformMatrix4fv(m_impl->texture_program.matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
+    glUniformMatrix4fv(m_impl->font_program.matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
+    glUniformMatrix4fv(m_impl->solid_program.matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
 
@@ -400,7 +407,9 @@ Painter::color(const FColor& c)
 #ifdef USE_OPENGL
 	glColor4f(c.red(), c.green(), c.blue(), c.alpha());
 #else
-	glUniform4f(m_impl->color_handler, c.red(), c.green(), c.blue(), c.alpha());
+	glUniform4f(m_impl->texture_program.color_handler, c.red(), c.green(), c.blue(), c.alpha());
+	glUniform4f(m_impl->font_program.color_handler, c.red(), c.green(), c.blue(), c.alpha());
+	glUniform4f(m_impl->solid_program.color_handler, c.red(), c.green(), c.blue(), c.alpha());
 #endif
 }
 
@@ -523,7 +532,8 @@ Painter::use_texture(unsigned int texid)
 
 	glEnable(GL_TEXTURE_2D);
 #ifndef USE_OPENGL
-	glUniform1i ( m_impl->sampler_handle, 0);
+	glUniform1i ( m_impl->texture_program.sampler_handle, 0);
+	glUniform1i ( m_impl->font_program.sampler_handle, 0);
 #endif
 }
 
@@ -733,12 +743,12 @@ Painter::draw_text(const Text_data& data)
 #else
 	glUseProgram(m_impl->font_program.program_handle);
 	glDisable(GL_CULL_FACE);
-	glVertexAttribPointer ( m_impl->vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
-	glEnableVertexAttribArray ( m_impl->vertex_handle );
-	glVertexAttribPointer ( m_impl->texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
-	glEnableVertexAttribArray ( m_impl->texture_handle );
+	glVertexAttribPointer ( m_impl->font_program.vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
+	glEnableVertexAttribArray ( m_impl->font_program.vertex_handle );
+	glVertexAttribPointer ( m_impl->font_program.texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
+	glEnableVertexAttribArray ( m_impl->font_program.texture_handle );
 
-	glUniform1i ( m_impl->sampler_handle, 0);
+	glUniform1i ( m_impl->font_program.sampler_handle, 0);
 
 	glDrawArrays ( GL_TRIANGLES, 0, vVector->size/4 );
 #endif
