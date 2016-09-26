@@ -89,6 +89,8 @@ Compositor::Compositor()
         exit(-1);
     }
 
+    SDL_GL_SetSwapInterval(0);
+
     m_focus_drag_widget = NULL;
     m_drag_started = false;
     g_painter = new Painter;
@@ -419,7 +421,6 @@ Compositor::run()
    	bool full_update = false;
     	bool need_update = false;
         SDL_WaitEvent(&event);
-	//SDL_PollEvent(&event);
         int windowID = SDL_GetWindowID(m_impl->window);
         
         switch(event.type){
@@ -483,7 +484,7 @@ Compositor::run()
 #ifdef USE_OPENGL
 			if (full_update)
 				SDL_GL_SwapWindow(m_impl->window);
-			else
+		else
 				glFlush();
 #else
 			SDL_GL_SwapWindow(m_impl->window);
