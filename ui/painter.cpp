@@ -293,9 +293,9 @@ Painter::init_gles2()
 	m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle  	= glGetAttribLocation (m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "position" );
 	m_impl->gl_pgm[GL_PROGRAM_SOLID].color_handle		= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle,  "input_color" );
 
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE]);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
 	glUniform1i ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].sampler_handle, 0);
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT]);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
 	glUniform1i ( m_impl->gl_pgm[GL_PROGRAM_FONT].sampler_handle, 0);
 }
 #endif
@@ -310,7 +310,7 @@ void
 Painter::use_default_gles_program()
 {
 #ifndef USE_OPENGL
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE]);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
 #endif
 }
 
@@ -386,11 +386,11 @@ Painter::load_projection_matrix(Matrix matrix)
 	glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(matrix);
 #else
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE]);
+    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
     glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT]);
+    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
     glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_FONT].matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID]);
+    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
     glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_SOLID].matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
@@ -402,11 +402,11 @@ Painter::load_model_matrix(Matrix matrix)
 	glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(matrix);
 #else
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE]);
+    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
     glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT]);
+    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
     glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_FONT].matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID]);
+    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
     glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_SOLID].matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
@@ -443,11 +443,11 @@ Painter::color(const FColor& c)
 #ifdef USE_OPENGL
 	glColor4f(c.red(), c.green(), c.blue(), c.alpha());
 #else
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE]);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
 	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].color_handle, c.red(), c.green(), c.blue(), c.alpha());
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT]);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
 	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_FONT].color_handle, c.red(), c.green(), c.blue(), c.alpha());
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID]);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
 	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_SOLID], c.red(), c.green(), c.blue(), c.alpha());
 #endif
 }
@@ -775,7 +775,7 @@ Painter::draw_text(const Text_data& data)
 	}
 	glEnd();
 #else
-	glUseProgram(m_impl->font_program.program_handle);
+	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
 	glDisable(GL_CULL_FACE);
 	glVertexAttribPointer ( m_impl->font_program.vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
 	glEnableVertexAttribArray ( m_impl->font_program.vertex_handle );
