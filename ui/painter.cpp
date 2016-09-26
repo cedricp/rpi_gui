@@ -448,7 +448,7 @@ Painter::color(const FColor& c)
 	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
 	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_FONT].color_handle, c.red(), c.green(), c.blue(), c.alpha());
 	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
-	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_SOLID], c.red(), c.green(), c.blue(), c.alpha());
+	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_SOLID].color_handle, c.red(), c.green(), c.blue(), c.alpha());
 #endif
 }
 
@@ -668,9 +668,9 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 							   ww, yy, 1., 0.};
 
 		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
-		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE] );
+		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle );
 		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
-		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE] );
+		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle);
 
 		glDrawArrays ( GL_TRIANGLES, 0, 6 );
 	}
