@@ -667,9 +667,9 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 							   ww, hh, 1., 1.,
 							   ww, yy, 1., 0.};
 
-		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE], 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
+		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
 		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE] );
-		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE], 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
+		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
 		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE] );
 
 		glDrawArrays ( GL_TRIANGLES, 0, 6 );
@@ -777,12 +777,12 @@ Painter::draw_text(const Text_data& data)
 #else
 	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
 	glDisable(GL_CULL_FACE);
-	glVertexAttribPointer ( m_impl->font_program.vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
-	glEnableVertexAttribArray ( m_impl->font_program.vertex_handle );
-	glVertexAttribPointer ( m_impl->font_program.texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
-	glEnableVertexAttribArray ( m_impl->font_program.texture_handle );
+	glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_FONT].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
+	glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_FONT].vertex_handle );
+	glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_FONT].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
+	glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_FONT].texture_handle );
 
-	glUniform1i ( m_impl->font_program.sampler_handle, 0);
+	glUniform1i ( m_impl->gl_pgm[GL_PROGRAM_FONT].sampler_handle, 0);
 
 	glDrawArrays ( GL_TRIANGLES, 0, vVector->size/4 );
 #endif
