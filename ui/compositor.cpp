@@ -107,11 +107,6 @@ Compositor::Compositor()
 
     SDL_GL_SetSwapInterval(1);
 
-    std::string cursor_path;
-    if (!painter().locate_resource("cross.bmp", cursor_path)){
-    	std::cerr << "Compositor::Compositor() : Cannot load cursor" << std::endl;
-    }
-
     m_focus_drag_widget = NULL;
     m_drag_started = false;
     g_painter = new Painter;

@@ -167,7 +167,7 @@ Painter::Painter()
 	if( locate_resource(font_name, font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 14);
 	} else {
-		std::cerr << "Painter::Painter : cannot initialize default fonts " << font_name << std::endl;
+		std::cerr << "Cannot load default fonts, aborting" << std::endl;
 	}
 }
 
@@ -738,15 +738,18 @@ Painter::remove_fonts(int idx)
 	m_impl->fonts.erase(m_impl->fonts.begin() + idx);
 }
 
-void
+bool
 Painter::build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data)
 {
+	if (font_id >= m_impl->fonts.size())
+		return false;
 	data.data->finfo = m_impl->fonts[font_id];
 	data.text = text;
 	if (data.data->text_vector)
 		vector_delete(data.data->text_vector);
 	data.data->text_vector = vector_new(sizeof(GLfloat));
 	generate_text(data);
+	return true;
 }
 
 void

@@ -54,7 +54,7 @@ public:
 	void draw_text(const Text_data& data);
 	void draw_quad(int x, int y, int width, int height, bool fill);
 
-	void build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data);
+	bool build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data);
 
 	void delete_texture(unsigned int idx);
 	void delete_texture(std::string name);
