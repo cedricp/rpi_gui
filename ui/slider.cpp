@@ -22,8 +22,8 @@ Slider::draw()
 	compute_cursor();
 
 	painter().use_texture(false);
-	painter().draw_quad(relative_bbox().xmin()+1, relative_bbox().ymin(), relative_bbox().width()-1, relative_bbox().height()-1, false);
-	painter().draw_quad(m_cursor.xmin(), m_cursor.ymin(), m_cursor.width(), m_cursor.height(), true);
+	painter().draw_quad(relative_bbox().xmin(), relative_bbox().ymin(), relative_bbox().width(), relative_bbox().height(), false);
+	painter().draw_quad(m_cursor.xmin(), m_cursor.ymin(), m_cursor.width(), m_cursor.height(), true, true);
 }
 
 void
@@ -32,7 +32,7 @@ Slider::compute_cursor(){
 	float value_from_zero = m_value - m_value_min;
 	if (m_type == SLIDER_TYPE_HORIZONTAL){
 		float slider_size = (float)w() / range;
-		slider_size = slider_size > 5 ? slider_size : 5;
+		slider_size = slider_size > 10 ? slider_size : 10;
 
 		float pos = value_from_zero * ((float)w() - slider_size) / range;
 
@@ -41,7 +41,7 @@ Slider::compute_cursor(){
 		m_cursor.height(h());
 	} else {
 		float slider_size = (float)h() / range;
-		slider_size = slider_size > 5 ? slider_size : 5;
+		slider_size = slider_size > 10 ? slider_size : 10;
 
 		float pos = value_from_zero * ((float)h() - slider_size) / range;
 

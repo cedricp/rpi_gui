@@ -614,7 +614,7 @@ Painter::texture_size(std::string name, int& w, int& h)
 
 
 void
-Painter::draw_quad(int x, int y, int width, int height, bool fill)
+Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid)
 {
 #ifdef USE_OPENGL
 	height += y;
@@ -641,38 +641,46 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill)
 		glEnd();
 	}
 #else
-	float xx = x;
-	float yy = y;
-	float ww = width;
-	float hh = height;
+	float xx = x + 1;
+	float yy = y + 1;
+	float ww = width + x - 2;
+	float hh = height + y - 2;
 	glDisable(GL_CULL_FACE);
 
 	if (!fill){
-        glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
+       		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
 		GLfloat gl_data[] = {  xx, yy,
-			               	   xx, hh,
-							   ww, hh,
-							   ww, yy,};
+		               	   xx, hh,
+				   ww, hh,
+				   ww, yy,};
 
 		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, (GLfloat*)gl_data );
 		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle );
 
 		glDrawArrays ( GL_LINE_LOOP, 0, 4 );
 	} else {
-        glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
-		GLfloat gl_data[] = {  xx, yy, 0., 0.,
-							   xx, hh, 0., 1.,
-							   ww, yy, 1., 0.,
-							   xx, hh, 0., 1.,
-							   ww, hh, 1., 1.,
-							   ww, yy, 1., 0.};
+		if(!solid){
+        		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
+			GLfloat gl_data[] = {  xx, yy, 0., 0.,
+			  		   xx, hh, 0., 1.,
+					   ww, yy, 1., 0.,
+					   xx, hh, 0., 1.,
+					   ww, hh, 1., 1.,
+					   ww, yy, 1., 0.};
 
-		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
-		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle );
-		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
-		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle);
+			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
+			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle );
+			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
+			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle);
 
-		glDrawArrays ( GL_TRIANGLES, 0, 6 );
+			glDrawArrays ( GL_TRIANGLES, 0, 6 );
+		} else {
+			glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
+			GLfloat gl_data[] = { xx, yy, xx, hh, ww, yy, xx, hh, ww, hh, ww, yy };
+			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, gl_data);
+			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle );
+			glDrawArrays ( GL_TRIANGLES, 0, 6);
+		}
 	}
 #endif
 }
