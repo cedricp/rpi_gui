@@ -78,6 +78,7 @@ public:
     IBbox 	screen_bbox();
     IBbox 	screen_bbox_corrected();
     IBbox 	relative_bbox();
+    void	drawing_area(IBbox& area);
     void 	screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy);
     
     virtual void draw();

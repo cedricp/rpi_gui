@@ -131,10 +131,8 @@ void Widget::internal_draw(bool force)
     painter().scissor_begin( bscr.xmin(), bscr.ymin(), bscr.width(), bscr.height() );
     if (!m_transparent)
     	painter().clear_color_buffer(m_bgcolor);
-
     painter().color(m_fgcolor);
     // Call widget custom draw method
-    painter().use_default_gles_program();
     draw();
     painter().scissor_end();
 
@@ -335,6 +333,15 @@ IBbox
 Widget::relative_bbox()
 {
     return m_bbox;
+}
+
+void
+Widget::drawing_area(IBbox &area)
+{
+	area.xmin(m_bbox.xmin() + 1);
+	area.ymin(m_bbox.ymin() );
+	area.xmax(m_bbox.xmax() - 1);
+	area.ymax(m_bbox.ymax() - 1);
 }
 
 IBbox

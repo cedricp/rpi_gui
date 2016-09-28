@@ -53,7 +53,7 @@ public:
     int 	run();
     void	mouse_position(int &x, int &y);
     void 	finish();
-    void	set_cursor(Compositor_cursors c);
+    void	cursor(Compositor_cursors c);
 };
 
 #define COMPOSITOR Compositor::get_singleton()

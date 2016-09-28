@@ -88,17 +88,23 @@ OBJECTS_DIR=$(INSTALL_DIR)/.objs
 INSTALL_LIB_DIR=$(INSTALL_DIR)/lib
 BIN_DIR=$(INSTALL_DIR)/bin
 
-# Globals
-GLOBAL_CXX_FLAGS+=-D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS)
-GLOBAL_LD_FLAGS+=-L$(INSTALL_LIB_DIR) $(LIB_FREETYPE2_LDFLAGS) -ldl -lpthread -lrt
-
 UI_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libui.a
 UTILS_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libutils.a
+HW_FM_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libhw_fm.a
+HW_TDA7419_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libhw_tda7419.a
+
+# Globals
+GLOBAL_CXX_FLAGS+=-D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS) -I$(SRC_ROOT_DIR)/utils -I$(SRC_ROOT_DIR)/hardware/fm_lib -I$(SRC_ROOT_DIR)/hardware/tda7419_lib
+GLOBAL_LD_FLAGS+=-L$(INSTALL_LIB_DIR) $(LIB_FREETYPE2_LDFLAGS) -ldl -lpthread -lrt
+APPS_LD_FLAGS=-lui -lhw_fm -lhw_tda7419 -lutils 
 
 export
 
-.PHONY: make_paths utils ui tests clean
-all: make_paths utils ui tests
+.PHONY: make_paths utils ui tests clean hardware
+all: make_paths utils hardware ui tests 
+
+hardware:
+	$(MAKE) -C hardware
 
 ui: make_paths utils 
 	$(MAKE) -C ui

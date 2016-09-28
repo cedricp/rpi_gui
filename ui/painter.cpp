@@ -641,18 +641,19 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid)
 		glEnd();
 	}
 #else
-	float xx = x + 1;
-	float yy = y + 1;
-	float ww = width + x - 2;
-	float hh = height + y - 2;
+	float xx = x;
+	float yy = y;
+	float ww = width + x;
+	float hh = height + y;
 	glDisable(GL_CULL_FACE);
 
 	if (!fill){
        		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
-		GLfloat gl_data[] = {  xx, yy,
-		               	   xx, hh,
-				   ww, hh,
-				   ww, yy,};
+		GLfloat gl_data[] = {
+							xx, yy,
+							xx, hh,
+							ww, hh,
+							ww, yy};
 
 		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, (GLfloat*)gl_data );
 		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle );
@@ -661,12 +662,13 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid)
 	} else {
 		if(!solid){
         		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
-			GLfloat gl_data[] = {  xx, yy, 0., 0.,
-			  		   xx, hh, 0., 1.,
-					   ww, yy, 1., 0.,
-					   xx, hh, 0., 1.,
-					   ww, hh, 1., 1.,
-					   ww, yy, 1., 0.};
+			GLfloat gl_data[] = {
+						xx, yy, 0., 0.,
+						xx, hh, 0., 1.,
+						ww, yy, 1., 0.,
+						xx, hh, 0., 1.,
+						ww, hh, 1., 1.,
+						ww, yy, 1., 0.};
 
 			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
 			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle );

@@ -131,7 +131,7 @@ Compositor::create_cursors()
 }
 
 void
-Compositor::set_cursor(Compositor_cursors cursor){
+Compositor::cursor(Compositor_cursors cursor){
 	SDL_SetCursor(m_impl->cursors[cursor]);
 }
 

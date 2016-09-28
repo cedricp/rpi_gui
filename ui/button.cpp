@@ -9,6 +9,7 @@ Button::Button(int x, int y, int width, int height, const char* name, Widget* pa
 	m_fgcolor = m_original_fg;
 	m_image_id = -1;
 	m_imgh = m_imgw = 0;
+	set_label(name);
 }
 
 Button::~Button()

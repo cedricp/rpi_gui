@@ -14,40 +14,46 @@ Slider::Slider(int x, int y, int width, int height, const char* name, Widget* pa
 	m_cursor.ymax(height);
 	compute_cursor();
 	callback(default_callback);
+	m_bgcolor = FColor(.3,.3,.3,1);
 }
 
 void
 Slider::draw()
 {
+	IBbox draw_area;
 	compute_cursor();
 
 	painter().use_texture(false);
-	painter().draw_quad(relative_bbox().xmin(), relative_bbox().ymin(), relative_bbox().width(), relative_bbox().height(), false);
+	drawing_area(draw_area);
+	painter().draw_quad(draw_area.xmin(), draw_area.ymin(), draw_area.width(), draw_area.height(), false);
 	painter().draw_quad(m_cursor.xmin(), m_cursor.ymin(), m_cursor.width(), m_cursor.height(), true, true);
 }
 
 void
 Slider::compute_cursor(){
+	IBbox draw_area;
+	drawing_area(draw_area);
+
 	float range = m_value_max - m_value_min;
 	float value_from_zero = m_value - m_value_min;
 	if (m_type == SLIDER_TYPE_HORIZONTAL){
-		float slider_size = (float)w() / range;
+		float slider_size = (float)draw_area.width() / range;
 		slider_size = slider_size > 10 ? slider_size : 10;
 
-		float pos = value_from_zero * ((float)w() - slider_size) / range;
+		float pos = value_from_zero * ((float)draw_area.width() - slider_size) / range;
 
-		m_cursor.move_to(pos, 0);
+		m_cursor.move_to(pos, draw_area.ymin() + 3);
 		m_cursor.width(slider_size);
-		m_cursor.height(h());
+		m_cursor.height(draw_area.height() - 5);
 	} else {
-		float slider_size = (float)h() / range;
+		float slider_size = (float)draw_area.height() / range;
 		slider_size = slider_size > 10 ? slider_size : 10;
 
-		float pos = value_from_zero * ((float)h() - slider_size) / range;
+		float pos = value_from_zero * ((float)draw_area.height() - slider_size) / range;
 
-		m_cursor.move_to(0, pos);
+		m_cursor.move_to(draw_area.xmin() + 3, pos);
 		m_cursor.height(slider_size);
-		m_cursor.width(w());
+		m_cursor.width(draw_area.width() - 5);
 	}
 }
 

@@ -4,14 +4,11 @@
 # Variables Definitions
 ###########################################################
 
-SOURCES=$(wildcard *.cpp)
-SOURCES_C=$(wildcard *.c)
-OBJECTS=$(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
-OBJECTS+=$(patsubst %.c, $(OBJECTS_DIR)/%.o, $(SOURCES_C))
-STATIC_LIB=$(UTILS_LIBRARY_NAME)
+SOURCES = $(wildcard *.cpp)
+OBJECTS = $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
+STATIC_LIB=$(HW_TDA7419_LIBRARY_NAME)
 
 DEP_DOT_D=$(SOURCES:.cpp=.d)
-DEP_DOT_D+=$(SOURCES_C:.c=.d)
 DEPENDENCY_FILES=$(addprefix $(OBJECTS_DIR)/,$(DEP_DOT_D))	
 
 CXXFLAGS+=$(GLOBAL_CXX_FLAGS)
@@ -25,10 +22,7 @@ all: $(DEPENDENCY_FILES) $(STATIC_LIB)
 	echo "Builing static library " $(STATIC_LIB)
 	
 $(OBJECTS_DIR)/%.o: %.cpp
-	@$(CXX) $< -c $(CXXFLAGS) -o $@
-	
-$(OBJECTS_DIR)/%.o: %.c
-	@$(CC) $< -c $(CXXFLAGS) -o $@  
+	@$(CXX) $< -c $(CXXFLAGS) -o $@ 
     
 $(STATIC_LIB): $(OBJECTS)
 	@$(AR) rcs $@ $(OBJECTS)
@@ -39,10 +33,6 @@ clean:
 $(OBJECTS_DIR)/%.d: %.cpp
 	@echo "Building dependencies for $<"
 	@$(CXX) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
-
-$(OBJECTS_DIR)/%.d: %.c
-	@echo "Building dependencies for $<"
-	@$(CC) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
 
 ###########################################################
 # Dependencies check
