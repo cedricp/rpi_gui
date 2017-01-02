@@ -42,7 +42,7 @@ Label::draw()
 
 	switch(m_valign){
 	case ALIGN_CENTERV:
-		yt = (h() - bound.height()) / 2 + bound.height() / 2;
+		yt = (h() - bound.height()) / 2 + bound.height();
 		break;
 	case ALIGN_TOP:
 		yt = bound.height();

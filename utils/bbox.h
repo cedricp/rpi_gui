@@ -68,6 +68,11 @@ public:
     	extend(b.x_max, b.y_max);
     }
 
+    void get_center(T &xx, T &yy) const {
+    	xx = width() / 2. + xmin();
+    	yy = height() / 2. + ymin();
+    }
+
     void move_to(T x, T y){
     	T w = x_max - x_min;
     	T h = y_max - y_min;

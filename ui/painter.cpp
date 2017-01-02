@@ -163,9 +163,9 @@ Painter::Painter()
 	init_gles2();
 #endif
 	std::string font_file;
-	std::string font_name = "aoldcomputer.ttf";
+	std::string font_name = "Roboto-Regular.ttf";
 	if( locate_resource(font_name, font_file) ){
-		m_impl->default_font_idx = load_fonts(font_file, 14);
+		m_impl->default_font_idx = load_fonts(font_file, 15);
 	} else {
 		std::cerr << "Cannot load default fonts, aborting" << std::endl;
 	}
@@ -614,12 +614,16 @@ Painter::texture_size(std::string name, int& w, int& h)
 
 
 void
-Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid)
+Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, float linewidth)
 {
 #ifdef USE_OPENGL
 	height += y;
 	width  += x;
 	if (!fill){
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glLineWidth(linewidth);
+		glEnable(GL_LINE_SMOOTH);
 		glBegin(GL_LINE_LOOP);
 		glVertex2f(x, y);
 		glVertex2f(x , height);
@@ -648,6 +652,10 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid)
 	glDisable(GL_CULL_FACE);
 
 	if (!fill){
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glLineWidth(linewidth);
+		glEnable(GL_LINE_SMOOTH);
        		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
 		GLfloat gl_data[] = {
 							xx, yy,
@@ -823,4 +831,112 @@ unsigned int
 Painter::default_font_idx()
 {
 	return m_impl->default_font_idx;
+}
+
+vertex_container*
+Painter::build_solid_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner )
+{
+	// automatically determine the number of segments from the circumference
+	if( numSegmentsPerCorner <= 0 ) {
+		numSegmentsPerCorner = (int)floor( cornerRadius * M_PI * 2 / 4 );
+	}
+	if( numSegmentsPerCorner < 2 ) numSegmentsPerCorner = 2;
+
+	float center_x, center_y;
+	r.get_center(center_x, center_y);
+
+	size_t num_coords = 4 + (numSegmentsPerCorner+1)*2*4;
+	vertex_container* vc = new vertex_container(num_coords);
+	float *verts = vc->data();
+	verts[0] = center_x;
+	verts[1] = center_y;
+	size_t tri = 1;
+	const float angleDelta = 1 / (float)numSegmentsPerCorner * M_PI / 2;
+	const float cornerCenterVerts[8] = { r.xmax() - cornerRadius, r.ymax() - cornerRadius, r.xmin() + cornerRadius, r.ymax() - cornerRadius,
+			r.xmin() + cornerRadius, r.ymin() + cornerRadius, r.xmax() - cornerRadius, r.ymin() + cornerRadius };
+	for( size_t corner = 0; corner < 4; ++corner ) {
+		float angle = corner * M_PI / 2.0f;
+		Vec2f cornerCenter( cornerCenterVerts[corner*2], cornerCenterVerts[corner*2+1] );
+		for( int s = 0; s <= numSegmentsPerCorner; s++ ) {
+			Vec2f pt( cornerCenter.x() + cos( angle ) * cornerRadius, cornerCenter.y() + sin( angle ) * cornerRadius );
+			verts[tri*2+0] = pt.x();
+			verts[tri*2+1] = pt.y();
+			++tri;
+			angle += angleDelta;
+		}
+	}
+	verts[tri*2] = r.xmax();
+	verts[tri*2+1] = r.ymax() - cornerRadius;
+	return vc;
+}
+
+void
+Painter::draw_solid_rounded_rectangle(vertex_container& vc)
+{
+	GLfloat *verts = vc.data();
+#ifdef USE_OPENGL
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glBegin(GL_TRIANGLE_FAN);
+	for(int i = 0; i < vc.size(); i+=2){
+		glVertex2f(verts[i], verts[i+1]);
+	}
+	glEnd();
+#else
+	// close it off
+
+	glVertexPointer( 2, GL_FLOAT, 0, verts );
+	glDrawArrays( GL_TRIANGLE_FAN, 0, vc.size() / 2 );
+#endif
+}
+
+vertex_container*
+Painter::build_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner )
+{
+	if( numSegmentsPerCorner <= 0 ) {
+		numSegmentsPerCorner = (int)floor( cornerRadius * M_PI * 2 / 4 );
+	}
+	if( numSegmentsPerCorner < 2 ) numSegmentsPerCorner = 2;
+
+	size_t num_coords = (numSegmentsPerCorner+2)*2*4;
+	vertex_container* vc = new vertex_container(num_coords);
+	float *verts = vc->data();
+	size_t lines = 0;
+	const float angleDelta = 1 / (float)numSegmentsPerCorner * M_PI / 2;
+	const float cornerCenterVerts[8] = { r.xmax() - cornerRadius, r.ymax() - cornerRadius, r.xmin() + cornerRadius, r.ymax() - cornerRadius,
+			r.xmin() + cornerRadius, r.ymin() + cornerRadius, r.xmax() - cornerRadius, r.ymin() + cornerRadius };
+	for( size_t corner = 0; corner < 4; ++corner ) {
+		float angle = corner * M_PI / 2.0f;
+		Vec2f cornerCenter( cornerCenterVerts[corner*2+0], cornerCenterVerts[corner*2+1] );
+		for( int s = 0; s <= numSegmentsPerCorner; s++ ) {
+			Vec2f pt( cornerCenter.x() + cos( angle ) * cornerRadius, cornerCenter.y() + sin( angle ) * cornerRadius );
+			verts[lines*2+0] = pt.x();
+			verts[lines*2+1] = pt.y();
+			++lines;
+			angle += angleDelta;
+		}
+	}
+	vc->resize(lines*2);
+	return vc;
+}
+
+void
+Painter::draw_rounded_rectangle(vertex_container& vc, float width)
+{
+	GLfloat *verts = vc.data();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glLineWidth(width);
+	glEnable(GL_LINE_SMOOTH);
+#ifdef USE_OPENGL
+	glBegin(GL_LINE_LOOP);
+	for(int i = 0; i < vc.size(); i+=2){
+		glVertex2f(verts[i], verts[i+1]);
+	}
+	glEnd();
+#else
+	// close it off
+
+	glVertexPointer( 2, GL_FLOAT, 0, verts );
+	glDrawArrays( GL_LINE_L, 0, vc.size() / 2);
+#endif
 }

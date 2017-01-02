@@ -1,4 +1,6 @@
+// Sequential access
 #define I2C_SEQ   0x10
+// Indexed access
 #define I2C_INDEX 0x11
 
 #define RADIO_REG_2 0x02

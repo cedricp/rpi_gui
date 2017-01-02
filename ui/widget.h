@@ -40,7 +40,7 @@ class Widget{
 
 protected:
     std::vector<Widget*> m_children_widgets;
-    int  		m_fixed_width, m_fixed_height;
+    int  		m_fixed_width, m_fixed_height, m_horizontal_margin, m_vertical_margin;
     Widget 		*m_parent;
     FColor 		m_bgcolor;
     FColor 		m_fgcolor;
@@ -49,6 +49,22 @@ protected:
     void		do_callback(Widget* w, void* arg);
     void		do_callback();
     static void default_callback(Widget*, void*);
+
+    virtual void parent_resize_event(const IBbox& bbox);
+    virtual bool enter_event();
+    virtual bool leave_event();
+    virtual bool mouse_press_event(int button);
+    virtual bool mouse_release_event(int button);
+    virtual bool mouse_wheel_event(int button);
+    virtual bool mouse_motion_event(int x, int y);
+    virtual bool drag_event(int rel_x, int rel_y);
+    virtual void timer_event(void* data);
+    virtual bool accept_drag(int x, int y);
+    virtual void widget_added_event(Widget* widget);
+    virtual void init_viewport(int x, int y, int width, int height);
+
+    virtual void draw();
+    virtual void post_draw();
 public:
     Widget(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
     virtual ~Widget();
@@ -80,8 +96,7 @@ public:
     IBbox 	relative_bbox();
     void	drawing_area(IBbox& area);
     void 	screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy);
-    
-    virtual void draw();
+
     virtual void resize(int x, int y, int w, int h);
     virtual void resize(int w, int h);
 
@@ -101,7 +116,10 @@ public:
     void  fixed_width(int w){m_fixed_width = w;}
     void  fixed_height(int h){m_fixed_height = h;}
 
-    bool hidden(){return m_visibility;}
+    void horizontal_margin(int h){m_horizontal_margin = h;}
+    void vertical_margin(int h){m_vertical_margin = h;}
+
+    bool hidden(){return !m_visibility;}
     void parent(Widget* w);
     void update(bool full_redraw = false);
     void damage(const IBbox& other);
@@ -123,19 +141,6 @@ public:
 
     void		 callback(WCallback* cb);
     void		 callback(WCallback* cb, void* user_data);
-
-    virtual void parent_resize_event(const IBbox& bbox);
-    virtual bool enter_event();
-    virtual bool leave_event();
-    virtual bool mouse_press_event(int button);
-    virtual bool mouse_release_event(int button);
-    virtual bool mouse_wheel_event(int button);
-    virtual bool mouse_motion_event(int x, int y);
-    virtual bool drag_event(int rel_x, int rel_y);
-    virtual void timer_event(void* data);
-    virtual bool accept_drag(int x, int y);
-    virtual void widget_added_event(Widget* widget);
-    virtual void init_viewport(int x, int y, int width, int height);
 
 };
 

@@ -2,8 +2,8 @@
 
 Slider::Slider(int x, int y, int width, int height, const char* name, Widget* parent, Slider_type type) : Widget( x, y, width, height, name, parent)
 {
-	m_value = 1;
-	m_value_max = 1000;
+	m_value = 6;
+	m_value_max = 30;
 	m_value_min = 0;
 	m_hold_value = 0;
 	m_type = type;
@@ -25,7 +25,7 @@ Slider::draw()
 
 	painter().use_texture(false);
 	drawing_area(draw_area);
-	painter().draw_quad(draw_area.xmin(), draw_area.ymin(), draw_area.width(), draw_area.height(), false);
+	painter().draw_quad(draw_area.xmin(), draw_area.ymin(), draw_area.width(), draw_area.height(), false, true, 2.);
 	painter().draw_quad(m_cursor.xmin(), m_cursor.ymin(), m_cursor.width(), m_cursor.height(), true, true);
 }
 
@@ -61,7 +61,7 @@ bool
 Slider::accept_drag(int x, int y)
 {
 	if (m_cursor.contains(x, y)){
-		m_hold_value = m_value;
+		m_hold_value = (float)x / (float)w() * (m_value_max - m_value_min) + m_value_min + 1;
 		return true;
 	}
 	return false;
@@ -70,8 +70,10 @@ Slider::accept_drag(int x, int y)
 bool
 Slider::drag_event(int rel_x, int rel_y)
 {
+	IBbox draw_area;
+	drawing_area(draw_area);
 	if (m_type == SLIDER_TYPE_HORIZONTAL){
-		float scaled = ((float)rel_x / (float)w()) *  float(m_value_max - m_value_min);
+		float scaled = (float)rel_x / (float)w() * (m_value_max - m_value_min);
 		m_value = m_hold_value - scaled;
 		m_value = m_value < m_value_min ? m_value_min : m_value;
 		m_value = m_value > m_value_max ? m_value_max : m_value;

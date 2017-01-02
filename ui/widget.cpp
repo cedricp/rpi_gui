@@ -29,6 +29,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_callbackdata 	= NULL;
     m_transparent	= false;
     m_fixed_width 	= m_fixed_height = -1;
+    m_horizontal_margin = m_vertical_margin = 1;
     use_default_font();
 
     matrix4_identity(m_model_matrix);
@@ -96,6 +97,12 @@ void Widget::draw()
 #endif
 }
 
+void
+Widget::post_draw()
+{
+
+}
+
 void Widget::init_viewport(int x, int y, int width, int height)
 {
     painter().viewport( x, y, width, height );
@@ -107,9 +114,12 @@ void Widget::init_viewport(int x, int y, int width, int height)
 void Widget::internal_draw(bool force)
 {
 	if (!force){
-		if (!m_visibility || !m_dirty)
+		if (!m_dirty)
 			return;
 	}
+
+	if (m_visibility == false)
+		return;
 
     int screen_h 	= COMPOSITOR->screen_height();
     IBbox bscr 		= screen_bbox_corrected();
@@ -158,24 +168,26 @@ Widget::resize(int w, int h)
 void
 Widget::parent_resize_event(const IBbox& bbox)
 {
-	if(m_bbox.width() > m_parent->w()){
-		m_bbox.width(m_parent->w());
-	}
-	if (m_bbox.height() > m_parent->h()){
-		m_bbox.height(m_parent->h());
-	}
+//	if(m_bbox.width() > m_parent->w()){
+//		m_bbox.width(m_parent->w());
+//	}
+//	if (m_bbox.height() > m_parent->h()){
+//		m_bbox.height(m_parent->h());
+//	}
 }
 
 void
 Widget::hide()
 {
     m_visibility = false;
+    m_dirty = true;
 }
 
 void
 Widget::show()
 {
     m_visibility = true;
+    m_dirty = true;
 }
 
 void
@@ -209,14 +221,14 @@ Widget::parent(Widget* w)
 
     if (m_parent != NULL){
          m_parent->remove_child(this);
+         w->add_child(this);
     } else {
         if (comp->widget_exists(this)){
             comp->remove_widget(this);
         }
-        comp->add_widget(this);
+        w->add_child(this);
     }
-
-    m_parent->add_child(w);
+    m_parent = w;
 }
 
 bool
@@ -249,6 +261,9 @@ void Widget::remove_child(Widget* w)
 void 
 Widget::update(bool full_redraw)
 {
+	if (m_visibility == false)
+		return;
+
     std::vector<Widget*>::iterator it = m_children_widgets.begin();
     for (; it < m_children_widgets.end(); ++it){
     	if ((*it)->m_dirty && (*it)->m_transparent){
@@ -338,10 +353,10 @@ Widget::relative_bbox()
 void
 Widget::drawing_area(IBbox &area)
 {
-	area.xmin(m_bbox.xmin() + 1);
-	area.ymin(m_bbox.ymin() );
-	area.xmax(m_bbox.xmax() - 1);
-	area.ymax(m_bbox.ymax() - 1);
+	area.xmin(m_horizontal_margin);
+	area.ymin(m_vertical_margin);
+	area.xmax(m_bbox.width() - m_horizontal_margin*2);
+	area.ymax(m_bbox.height() - m_vertical_margin*2);
 }
 
 IBbox
@@ -422,8 +437,7 @@ Widget::get_all_children(std::vector<Widget*>& list)
 
 bool
 Widget::internal_mouse_motion_event(int x, int y, Widget **w){
-	bool event_taken = false;
-
+	if (hidden()) return false;
 	std::vector<Widget*>::iterator it = m_children_widgets.begin();
 	for (; it < m_children_widgets.end(); ++it){
 		bool infocus = (*it)->screen_bbox().contains(x, y);
@@ -433,10 +447,6 @@ Widget::internal_mouse_motion_event(int x, int y, Widget **w){
 				 break;
 		}
 	}
-
-	bool state;
-	int wx, wy;
-	screen_to_widget_coordinates(x, y, wx, wy);
 
 	if(*w == NULL){
 		*w = this;
@@ -449,7 +459,7 @@ Widget::internal_mouse_motion_event(int x, int y, Widget **w){
 bool
 Widget::internal_mouse_button_event(int x, int y, int button, Widget **w, bool press)
 {
-	bool event_taken = false;
+	if (hidden()) return false;
 
 	std::vector<Widget*>::iterator it = m_children_widgets.begin();
 	for (; it < m_children_widgets.end(); ++it){
@@ -479,8 +489,7 @@ Widget::internal_mouse_button_event(int x, int y, int button, Widget **w, bool p
 bool
 Widget::internal_mouse_wheel_event(int x, int y, int we, Widget **w)
 {
-	bool event_taken = false;
-
+	if (hidden()) return false;
 	std::vector<Widget*>::iterator it = m_children_widgets.begin();
 	for (; it < m_children_widgets.end(); ++it){
 		bool infocus = (*it)->screen_bbox().contains(x, y);

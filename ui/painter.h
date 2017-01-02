@@ -4,6 +4,7 @@
 #include "color.h"
 #include "bbox.h"
 #include <matrix.h>
+#include <string.h>
 #include <string>
 
 struct PImpl;
@@ -20,6 +21,40 @@ struct Text_data{
 enum TextureMode {
 	TEXTURE_RGBA,
 	TEXTURE_ALPHA
+};
+
+class Vec2f{
+	float m_x, m_y;
+public:
+	Vec2f(float x, float y){
+		m_x = x;
+		m_y = y;
+	}
+	inline float x(){return m_x;}
+	inline float y(){return m_y;}
+};
+
+class vertex_container{
+	float* m_data;
+	size_t m_size;
+public:
+	vertex_container(size_t size){
+		m_data = new float[size];
+		m_size = size;
+	}
+	~vertex_container(){
+		delete[] m_data;
+	}
+	void resize(size_t size){
+		float* temp = new float[size];
+		size_t min_size = size < m_size ? size : m_size;
+		memcpy((void*)temp, (void*)m_data, min_size * sizeof(float));
+		delete[] m_data;
+		m_data = temp;
+		m_size = size;
+	}
+	inline float* data(){return m_data;}
+	inline size_t size(){return m_size;}
 };
 
 class Painter
@@ -52,7 +87,7 @@ public:
 	bool locate_resource(std::string name, std::string &path);
 
 	void draw_text(const Text_data& data);
-	void draw_quad(int x, int y, int width, int height, bool fill, bool solid = false);
+	void draw_quad(int x, int y, int width, int height, bool fill, bool solid = false, float linewidth = 1.0);
 
 	bool build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data);
 
@@ -66,6 +101,10 @@ public:
 	void disable_texture();
 	unsigned int default_font_idx();
 	void use_default_gles_program();
+	vertex_container* build_solid_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner );
+	void draw_solid_rounded_rectangle(vertex_container& vc);
+	vertex_container* build_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner );
+	void draw_rounded_rectangle(vertex_container& vc, float width = 1.5);
 };
 
 #endif

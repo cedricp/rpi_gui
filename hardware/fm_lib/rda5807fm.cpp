@@ -184,7 +184,7 @@ void RDA5807_fm::updateStatus() {
 //	}
 //	Wire.endTransmission();
 
-	int fd = wiringPiI2CSetup(I2C_SEQ);
+	int fd = wiringPiI2CSetup(I2C_INDEX);
 	for (int i = RADIO_REG_A; i <= RADIO_REG_F; ++i) {
 		m_regs[i] = wiringPiI2CReadReg16(fd, i);
 	}
