@@ -5,11 +5,26 @@
 
 class Button : public Widget
 {
+public:
+	enum BUTTON_STYLE{
+		STYLE_ROUNDED_FILLED,
+		STYLE_ROUNDED,
+		STYLE_TAB
+	};
+	enum ICON_ALIGN{
+		ICON_ALIGN_LEFT,
+		ICON_ALIGN_CENTER,
+		ICON_ALIGN_RIGHT
+	};
+private:
 	FColor m_color_push, m_color_hover, m_original_fg, m_text_color;
 	unsigned int m_image_id;
 	int m_imgw, m_imgh;
 	Text_data m_text_data;
 	int m_id;
+	BUTTON_STYLE m_style;
+	bool m_toggled;
+	ICON_ALIGN m_icon_align;
 	vertex_container* m_rounded_rect_data;
 protected:
 	virtual void draw();
@@ -22,13 +37,18 @@ public:
 	virtual bool leave_event();
 	virtual bool enter_event();
 
-	void set_image(std::string image);
-	void set_label(std::string label);
+	void image(std::string image);
+	void label(std::string label);
+	void style(BUTTON_STYLE style);
 
 	int text_width();
 	int text_height();
 
 	void text_color(const FColor& tc);
+	void toggle(bool);
+	bool toggled();
+
+	void icon_align(ICON_ALIGN a);
 
 	void id(int id){
 		m_id = id;

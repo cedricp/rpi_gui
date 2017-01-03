@@ -135,6 +135,11 @@ public:
         m_dirty = d;
     }
     
+    void margin(int w, int h){
+    	m_vertical_margin = h;
+    	m_horizontal_margin = w;
+    }
+
     void use_font(std::string font_name);
     void use_default_font();
     void load_font(std::string font_id, int size, int atlas_size = 1024);

@@ -165,7 +165,7 @@ Painter::Painter()
 	std::string font_file;
 	std::string font_name = "Roboto-Regular.ttf";
 	if( locate_resource(font_name, font_file) ){
-		m_impl->default_font_idx = load_fonts(font_file, 15);
+		m_impl->default_font_idx = load_fonts(font_file, 12);
 	} else {
 		std::cerr << "Cannot load default fonts, aborting" << std::endl;
 	}

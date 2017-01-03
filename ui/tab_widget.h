@@ -24,6 +24,14 @@ public:
 		return button;
 	}
 
+	void activate(int n){
+		for (int i = 0; i < m_buttons.size(); ++i)
+			if (i != n)
+				m_buttons[i]->toggle(false);
+			else
+				m_buttons[i]->toggle(true);
+	}
+
 	void recompute_width(){
 		int width = 0;
 		for (int i = 0; i < m_buttons.size(); ++i){

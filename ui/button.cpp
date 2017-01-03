@@ -11,7 +11,10 @@ Button::Button(int x, int y, int width, int height, const char* name, Widget* pa
 	m_image_id = -1;
 	m_imgh = m_imgw = 0;
 	m_rounded_rect_data = NULL;
-	set_label(name);
+	m_style = STYLE_ROUNDED;
+	m_toggled = false;
+	m_icon_align = ICON_ALIGN_LEFT;
+	label(name);
 }
 
 Button::~Button()
@@ -22,7 +25,29 @@ Button::~Button()
 }
 
 void
-Button::set_image(std::string image_filename)
+Button::icon_align(ICON_ALIGN a)
+{
+	m_icon_align = a;
+}
+
+void
+Button::toggle(bool t)
+{
+	if (t)
+		m_fgcolor = m_color_push;
+	else
+		m_fgcolor = m_original_fg;
+	m_toggled = t;
+}
+
+bool
+Button::toggled()
+{
+	return m_toggled;
+}
+
+void
+Button::image(std::string image_filename)
 {
 	std::string image_name = string_basename(image_filename);
 	m_image_id = painter().create_texture_svg(image_name, image_filename);
@@ -36,20 +61,47 @@ Button::set_image(std::string image_filename)
 
 void
 Button::draw(){
-	int x = (w() - m_imgw) / 2;
-	int y = (h() - m_imgh) / 2;
+	int x, y;
+	const int ww = w() - m_horizontal_margin * 2;
+	const int hh = h() - m_vertical_margin * 2;
+	if (m_icon_align == ICON_ALIGN_CENTER){
+		x = (ww - m_imgw) / 2;
+		y = (hh - m_imgh) / 2;
+	} else if (m_icon_align == ICON_ALIGN_LEFT){
+		x = (ww / 10);
+		y = (hh - m_imgh) / 2;
+	} else if (m_icon_align == ICON_ALIGN_RIGHT){
+		x = (ww - w() / 10);
+		y = (hh - m_imgh) / 2;
+	}
 
 	IBbox area;
 	drawing_area(area);
 	FBbox areaf(area.xmin(), area.xmax(), area.ymin(), area.ymax());
 	painter().disable_texture();
-	if (!m_rounded_rect_data)
-		m_rounded_rect_data = painter().build_solid_rounded_rectangle(areaf, 8, 10);
-	painter().draw_solid_rounded_rectangle(*m_rounded_rect_data);
 
-	painter().use_texture(m_image_id);
-	painter().enable_alpha(true);
-	painter().draw_quad(x, y, m_imgw, m_imgh, true);
+	if (m_style == STYLE_ROUNDED_FILLED){
+		if (!m_rounded_rect_data)
+			m_rounded_rect_data = painter().build_solid_rounded_rectangle(areaf, 8, 10);
+		painter().draw_solid_rounded_rectangle(*m_rounded_rect_data);
+	} else if (m_style == STYLE_TAB){
+		float hh = h();
+		float ww = w();
+		float vtx[] = { 0,hh, 0,0, ww - 8,0, ww,8, ww,hh };
+		vertex_container vc(10);
+		memcpy(vc.data(), vtx, 10*sizeof(float));
+		painter().draw_solid_rounded_rectangle(vc);
+	} else if (m_style == STYLE_ROUNDED) {
+		if (!m_rounded_rect_data)
+			m_rounded_rect_data = painter().build_rounded_rectangle(areaf, 8, 10);
+		painter().draw_rounded_rectangle(*m_rounded_rect_data);
+	}
+
+	if(m_image_id >= 0){
+		painter().use_texture(m_image_id);
+		painter().enable_alpha(true);
+		painter().draw_quad(x, y, m_imgw, m_imgh, true);
+	}
 
 	if (!m_text_data.text.empty()){
 		IBbox& bound = m_text_data.bbox;
@@ -70,9 +122,19 @@ Button::text_color(const FColor& tc)
 }
 
 void
-Button::set_label(std::string label)
+Button::label(std::string label)
 {
 	painter().build_text(m_font_id, label.c_str(), 0, 0, m_text_data);
+}
+
+void
+Button::style(BUTTON_STYLE style)
+{
+	m_style = style;
+	if (m_rounded_rect_data)
+		delete m_rounded_rect_data;
+	m_rounded_rect_data = NULL;
+	dirty(true);
 }
 
 bool
@@ -94,6 +156,8 @@ Button::mouse_release_event(int button){
 
 bool
 Button::enter_event(){
+	if (m_toggled)
+		return false;
 	m_fgcolor = m_color_hover;
 	dirty(true);
 	return true;
@@ -101,6 +165,8 @@ Button::enter_event(){
 
 bool
 Button::leave_event(){
+	if (m_toggled)
+		return false;
 	m_fgcolor = m_original_fg;
 	dirty(true);
 	return true;
