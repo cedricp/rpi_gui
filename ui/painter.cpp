@@ -163,9 +163,9 @@ Painter::Painter()
 	init_gles2();
 #endif
 	std::string font_file;
-	std::string font_name = "Roboto-Regular.ttf";
+	std::string font_name = "SourceCodePro-Black.ttf";
 	if( locate_resource(font_name, font_file) ){
-		m_impl->default_font_idx = load_fonts(font_file, 12);
+		m_impl->default_font_idx = load_fonts(font_file, 16);
 	} else {
 		std::cerr << "Cannot load default fonts, aborting" << std::endl;
 	}
@@ -656,7 +656,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, f
 		glEnable(GL_BLEND);
 		glLineWidth(linewidth);
 		glEnable(GL_LINE_SMOOTH);
-       		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
+       	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
 		GLfloat gl_data[] = {
 							xx, yy,
 							xx, hh,
@@ -669,7 +669,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, f
 		glDrawArrays ( GL_LINE_LOOP, 0, 4 );
 	} else {
 		if(!solid){
-        		glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
+        	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
 			GLfloat gl_data[] = {
 						xx, yy, 0., 0.,
 						xx, hh, 0., 1.,

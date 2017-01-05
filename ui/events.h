@@ -7,6 +7,4 @@
 #define EVENT_MOUSE_BUTTON_WHEEL_UP 1 << 3
 #define EVENT_MOUSE_BUTTON_WHEEL_DOWN 1 << 4
 
-
-
 #endif

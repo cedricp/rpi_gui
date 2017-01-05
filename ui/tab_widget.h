@@ -26,10 +26,11 @@ public:
 
 	void activate(int n){
 		for (int i = 0; i < m_buttons.size(); ++i)
-			if (i != n)
+			if (i != n){
 				m_buttons[i]->toggle(false);
-			else
+			} else {
 				m_buttons[i]->toggle(true);
+			}
 	}
 
 	void recompute_width(){

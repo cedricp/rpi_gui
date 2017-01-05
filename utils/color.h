@@ -31,6 +31,9 @@ public:
     T blue() const {return m_blue;}
     T alpha() const {return m_alpha;}
     
+    Color<T> darken(){
+    	return Color<T>(m_red / 2, m_green / 2, m_blue / 2, m_alpha);
+    }
 };
 
 typedef Color<char> IColor;

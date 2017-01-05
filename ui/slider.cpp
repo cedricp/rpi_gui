@@ -98,6 +98,5 @@ Slider::mouse_release_event(int button)
 bool
 Slider::leave_event()
 {
-	do_callback();
 	return true;
 }

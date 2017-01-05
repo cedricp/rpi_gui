@@ -11,7 +11,7 @@ Button::Button(int x, int y, int width, int height, const char* name, Widget* pa
 	m_image_id = -1;
 	m_imgh = m_imgw = 0;
 	m_rounded_rect_data = NULL;
-	m_style = STYLE_ROUNDED;
+	m_style = STYLE_ROUNDED_FILLED;
 	m_toggled = false;
 	m_icon_align = ICON_ALIGN_LEFT;
 	label(name);
@@ -33,10 +33,11 @@ Button::icon_align(ICON_ALIGN a)
 void
 Button::toggle(bool t)
 {
-	if (t)
+	if (t){
 		m_fgcolor = m_color_push;
-	else
+	} else {
 		m_fgcolor = m_original_fg;
+	}
 	m_toggled = t;
 }
 
@@ -109,7 +110,10 @@ Button::draw(){
 		int y = (h() - bound.height()) / 2 + bound.height();
 		push_model_matrix();
 		translate(x, y);
-		painter().color(m_text_color);
+		if (m_toggled || m_style != STYLE_TAB)
+			painter().color(m_text_color);
+		else
+			painter().color(m_text_color.darken());
 		painter().draw_text(m_text_data);
 		pop_model_matrix();
 	}
