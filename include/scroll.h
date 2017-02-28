@@ -16,6 +16,7 @@ public:
 	virtual void widget_added_event(Widget* widget);
 
 	void set_scroll_widget(Widget* scroll_widget);
+	void reset();
 };
 
 #endif

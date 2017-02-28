@@ -54,6 +54,7 @@ public:
     void	mouse_position(int &x, int &y);
     void 	finish();
     void	cursor(Compositor_cursors c);
+    void	advert_widget_deleted(Widget* w);
 };
 
 #define COMPOSITOR Compositor::get_singleton()

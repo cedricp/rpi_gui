@@ -35,7 +35,7 @@ CXX=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-g++
 AR=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-ar
 LD=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-ld
 INSTALL_DIR=$(SRC_ROOT_DIR)/BUILD_RPI
-GLOBAL_CXX_FLAGS+=--sysroot=$(SYSROOT) -I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/usr/include
+GLOBAL_CXX_FLAGS+=--sysroot=$(SYSROOT) -I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/usr/include -g
 GLOBAL_LD_FLAGS+=--sysroot=$(SYSROOT) -L$(SYSROOT)/usr/lib -L$(SYSROOT)/usr/lib/arm-linux-gnueabihf
 
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_CROSSPI)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic

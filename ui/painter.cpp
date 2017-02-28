@@ -26,13 +26,16 @@ struct Img_info{
 		texid = id;
 		width = w;
 		height = h;
+		ref_count = 0;
 	}
 	Img_info(const Img_info& info){
 		texid = info.texid;
 		width = info.width;
 		height = info.height;
+		ref_count = info.ref_count;
 	}
 	GLuint texid;
+	size_t ref_count;
 	int width, height;
 };
 
@@ -59,12 +62,12 @@ struct FontImpl{
 	Font_info finfo;
 };
 
-
 #ifndef USE_OPENGL
 enum gl_program_type{
 	GL_PROGRAM_TEXTURE,
 	GL_PROGRAM_FONT,
 	GL_PROGRAM_SOLID,
+	GL_PROGRAM_VERTEX_COLOR,
 	GL_PROGRAM_SIZE
 };
 
@@ -92,8 +95,6 @@ Text_data::Text_data()
 }
 
 Text_data::~Text_data(){
-	if (data->text_vector)
-		vector_delete(data->text_vector);
 	delete data;
 };
 
@@ -122,7 +123,7 @@ void generate_text(Text_data& td)
 			}
 			start_x += kerning;
 			int x0  = (int)( start_x + glyph->offset_x );
-			int y0  = (int)( start_y  );
+			int y0  = (int)( start_y - (glyph->offset_y-glyph->height) );
 			int x1  = (int)( x0 + glyph->width );
 			int y1  = (int)( y0 - glyph->height );
 			float s0 = glyph->s0;
@@ -163,7 +164,7 @@ Painter::Painter()
 	init_gles2();
 #endif
 	std::string font_file;
-	std::string font_name = "SourceCodePro-Black.ttf";
+	std::string font_name = "white_rabbit.ttf";
 	if( locate_resource(font_name, font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 16);
 	} else {
@@ -220,13 +221,15 @@ Painter::init_gles2()
 
 	GLuint vertex_shader 		 = load_shader(GL_VERTEX_SHADER, vertex_shader_src);
 	GLuint vertex_shader_simple	 = load_shader(GL_VERTEX_SHADER, vertex_shader_simple_src);
+	GLuint vertex_shader_color	 = load_shader(GL_VERTEX_SHADER, vertex_color_shader_src);
 	GLuint fragment_shader 		 = load_shader(GL_FRAGMENT_SHADER, frag_shader_src);
 	GLuint fragment_shader_font  = load_shader(GL_FRAGMENT_SHADER, frag_shader_font_src);
 	GLuint fragment_shader_solid = load_shader(GL_FRAGMENT_SHADER, frag_shader_solid_src);
 
-	m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle 	= glCreateProgram();
-	m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle 		= glCreateProgram();
-	m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle 	= glCreateProgram();
+	m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle 		= glCreateProgram();
+	m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle 			= glCreateProgram();
+	m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle 		= glCreateProgram();
+	m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].program_handle 	= glCreateProgram();
 
 	if(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle== 0){
 		std::cerr << "Painter::init_gles2() : Cannot create program 'texture'" << std::endl;
@@ -240,6 +243,11 @@ Painter::init_gles2()
 
 	if(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle== 0){
 		std::cerr << "Painter::init_gles2() : Cannot create program 'solid'" << std::endl;
+		return;
+	}
+
+	if(m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].program_handle== 0){
+		std::cerr << "Painter::init_gles2() : Cannot create program 'vertex_color'" << std::endl;
 		return;
 	}
 
@@ -273,6 +281,16 @@ Painter::init_gles2()
 		std::cerr << "Failed to link solid shader" << std::endl;
 	}
 
+	// Vertex color shader
+	glAttachShader(m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].program_handle, vertex_shader_color);
+	glAttachShader(m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].program_handle, fragment_shader);
+
+	glLinkProgram(m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].program_handle);
+	glGetProgramiv(m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].program_handle, GL_LINK_STATUS, &linkSuccessful);
+	if (!linkSuccessful){
+		std::cerr << "Failed to link vertex color shader" << std::endl;
+	}
+
 	// Attribs locations
 	m_impl->gl_pgm[GL_PROGRAM_TEXTURE].matrix_projection= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle, "projection_matrix");
 	m_impl->gl_pgm[GL_PROGRAM_TEXTURE].matrix_model 	= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle, "model_matrix");
@@ -292,6 +310,11 @@ Painter::init_gles2()
 	m_impl->gl_pgm[GL_PROGRAM_SOLID].matrix_model 		= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "model_matrix");
 	m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle  	= glGetAttribLocation (m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "position" );
 	m_impl->gl_pgm[GL_PROGRAM_SOLID].color_handle		= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle,  "input_color" );
+
+	m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].matrix_projection 	= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "projection_matrix");
+	m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].matrix_model 		= glGetUniformLocation(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "model_matrix");
+	m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].color_handle		= glGetAttribLocation (m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "input_color" );
+	m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR].vertex_handle  		= glGetAttribLocation (m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle, "position" );
 
 	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
 	glUniform1i ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].sampler_handle, 0);
@@ -386,12 +409,13 @@ Painter::load_projection_matrix(Matrix matrix)
 	glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(matrix);
 #else
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
-    glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
-    glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_FONT].matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
-    glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_SOLID].matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
+    gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_TEXTURE];
+    glUseProgram(glprog.program_handle);
+    glUniformMatrix4fv(glprog.matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
+    glUseProgram(glprog.program_handle);
+    glUniformMatrix4fv(glprog.matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
+    glUseProgram(glprog.program_handle);
+    glUniformMatrix4fv(glprog.matrix_projection, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
 
@@ -402,12 +426,13 @@ Painter::load_model_matrix(Matrix matrix)
 	glMatrixMode(GL_MODELVIEW);
     glLoadMatrixf(matrix);
 #else
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
-    glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
-    glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_FONT].matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
-    glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
-    glUniformMatrix4fv(m_impl->gl_pgm[GL_PROGRAM_SOLID].matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
+    gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_TEXTURE];
+    glUseProgram(glprog.program_handle);
+    glUniformMatrix4fv(glprog.matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
+    glUseProgram(glprog.program_handle);
+    glUniformMatrix4fv(glprog.matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
+    glUseProgram(glprog.program_handle);
+    glUniformMatrix4fv(glprog.matrix_model, 1, GL_FALSE, (GLfloat *)matrix);
 #endif
 }
 
@@ -443,12 +468,13 @@ Painter::color(const FColor& c)
 #ifdef USE_OPENGL
 	glColor4f(c.red(), c.green(), c.blue(), c.alpha());
 #else
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
-	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].color_handle, c.red(), c.green(), c.blue(), c.alpha());
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
-	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_FONT].color_handle, c.red(), c.green(), c.blue(), c.alpha());
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
-	glUniform4f(m_impl->gl_pgm[GL_PROGRAM_SOLID].color_handle, c.red(), c.green(), c.blue(), c.alpha());
+	gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_TEXTURE];
+	glUseProgram(glprog.program_handle);
+	glUniform4f(glprog.color_handle, c.red(), c.green(), c.blue(), c.alpha());
+	glUseProgram(glprog.program_handle);
+	glUniform4f(glprog.color_handle, c.red(), c.green(), c.blue(), c.alpha());
+	glUseProgram(glprog.program_handle);
+	glUniform4f(glprog.color_handle, c.red(), c.green(), c.blue(), c.alpha());
 #endif
 }
 
@@ -493,6 +519,7 @@ unsigned int
 Painter::create_texture_svg(std::string name, std::string filename)
 {
 	if (m_impl->textures.find(name) != m_impl->textures.end()){
+		m_impl->textures[name].ref_count++;
 		return m_impl->textures[name].texid;
 	}
 
@@ -513,6 +540,7 @@ unsigned int
 Painter::create_texture(std::string name, const char* img, int w, int h, TextureMode mode)
 {
 	if (m_impl->textures.find(name) != m_impl->textures.end()){
+		m_impl->textures[name].ref_count++;
 		return m_impl->textures[name].texid;
 	}
 
@@ -529,6 +557,7 @@ Painter::create_texture(std::string name, const char* img, int w, int h, Texture
 		glTexImage2D(GL_TEXTURE_2D, 0,GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, img);
 
 	m_impl->textures[name] = Img_info(textureID, w, h);
+	m_impl->textures[name].ref_count++;
 	return textureID;
 }
 
@@ -555,9 +584,13 @@ Painter::delete_texture(std::string name){
 	it = m_impl->textures.find(name);
 
 	if (it == m_impl->textures.end()){
-		std::cerr << "Painter::delete_texture : cannot delete texture " << name << std::endl;
+		std::cerr << "Painter::delete_texture : cannot delete named texture " << name << std::endl;
 		return;
 	}
+
+	--it->second.ref_count;
+	if (it->second.ref_count > 0)
+		return;
 
 	glDeleteTextures(1, &it->second.texid);
 	m_impl->textures.erase(it);
@@ -614,6 +647,63 @@ Painter::texture_size(std::string name, int& w, int& h)
 
 
 void
+Painter::draw_quad_gradient(int x, int y, int width, int height, FColor& color_top, FColor& color_bottom)
+{
+	disable_texture();
+#ifdef USE_OPENGL
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0);
+	glColor3f(color_top.red(), color_top.green(), color_top.blue());
+	glVertex2f(x, y);
+	glTexCoord2f(0, 1);
+	glColor3f(color_bottom.red(), color_bottom.green(), color_bottom.blue());
+	glVertex2f(x , height);
+	glTexCoord2f(1, 1);
+	glColor3f(color_bottom.red(), color_bottom.green(), color_bottom.blue());
+	glVertex2f(width, height);
+	glTexCoord2f(1, 0);
+	glColor3f(color_top.red(), color_top.green(), color_top.blue());
+	glVertex2f(width, y);
+	glEnd();
+#else
+	float xx = x;
+	float yy = y;
+	float ww = width + x;
+	float hh = height + y;
+	glDisable(GL_CULL_FACE);
+
+	GLfloat gl_data[] = {
+				xx, yy, 0., 0.,
+				xx, hh, 0., 1.,
+				ww, yy, 1., 0.,
+				xx, hh, 0., 1.,
+				ww, hh, 1., 1.,
+				ww, yy, 1., 0.};
+
+	GLfloat color_data[] = {
+			color_top.red(), color_top.green(), color_top.blue(), 1,
+			color_bottom.red(), color_bottom.green(), color_bottom.blue(), 1,
+			color_top.red(), color_top.green(), color_top.blue(), 1,
+			color_bottom.red(), color_bottom.green(), color_bottom.blue(), 1,
+			color_bottom.red(), color_bottom.green(), color_bottom.blue(), 1,
+			color_top.red(), color_top.green(), color_top.blue(), 1,
+	};
+
+	gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_VERTEX_COLOR];
+
+	glUseProgram(glprog.program_handle);
+	GLfloat gl_data[] = { xx, yy, xx, hh, ww, yy, xx, hh, ww, hh, ww, yy };
+	glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, gl_data);
+	glEnableVertexAttribArray ( glprog.vertex_handle );
+	glVertexAttribPointer ( glprog.color_handle, 4, GL_FLOAT, GL_FALSE, 0, color_data);
+	glEnableVertexAttribArray ( glprog.color_handle );
+	glDrawArrays ( GL_TRIANGLES, 0, 6);
+
+#endif
+}
+
+void
 Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, float linewidth)
 {
 #ifdef USE_OPENGL
@@ -651,25 +741,28 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, f
 	float hh = height + y;
 	glDisable(GL_CULL_FACE);
 
+
 	if (!fill){
+		gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_SOLID];
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
 		glLineWidth(linewidth);
 		glEnable(GL_LINE_SMOOTH);
-       	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
+       	glUseProgram(glprog.program_handle);
 		GLfloat gl_data[] = {
 							xx, yy,
 							xx, hh,
 							ww, hh,
 							ww, yy};
 
-		glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, (GLfloat*)gl_data );
-		glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle );
+		glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, (GLfloat*)gl_data );
+		glEnableVertexAttribArray ( glprog.vertex_handle );
 
 		glDrawArrays ( GL_LINE_LOOP, 0, 4 );
 	} else {
 		if(!solid){
-        	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_TEXTURE].program_handle);
+			gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_TEXTURE];
+        	glUseProgram(glprog.program_handle);
 			GLfloat gl_data[] = {
 						xx, yy, 0., 0.,
 						xx, hh, 0., 1.,
@@ -678,17 +771,18 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, f
 						ww, hh, 1., 1.,
 						ww, yy, 1., 0.};
 
-			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
-			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].vertex_handle );
-			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
-			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_TEXTURE].texture_handle);
+			glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)gl_data );
+			glEnableVertexAttribArray ( glprog.vertex_handle );
+			glVertexAttribPointer ( glprog.texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), ((GLfloat*)gl_data) +2 );
+			glEnableVertexAttribArray ( glprog.texture_handle);
 
 			glDrawArrays ( GL_TRIANGLES, 0, 6 );
 		} else {
-			glUseProgram(m_impl->gl_pgm[GL_PROGRAM_SOLID].program_handle);
+			gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_SOLID];
+			glUseProgram(glprog.program_handle);
 			GLfloat gl_data[] = { xx, yy, xx, hh, ww, yy, xx, hh, ww, hh, ww, yy };
-			glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, gl_data);
-			glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_SOLID].vertex_handle );
+			glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, gl_data);
+			glEnableVertexAttribArray ( glprog.vertex_handle );
 			glDrawArrays ( GL_TRIANGLES, 0, 6);
 		}
 	}
@@ -796,14 +890,15 @@ Painter::draw_text(const Text_data& data)
 	}
 	glEnd();
 #else
-	glUseProgram(m_impl->gl_pgm[GL_PROGRAM_FONT].program_handle);
+	gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_FONT];
+	glUseProgram(glprog.program_handle);
 	glDisable(GL_CULL_FACE);
-	glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_FONT].vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
-	glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_FONT].vertex_handle );
-	glVertexAttribPointer ( m_impl->gl_pgm[GL_PROGRAM_FONT].texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
-	glEnableVertexAttribArray ( m_impl->gl_pgm[GL_PROGRAM_FONT].texture_handle );
+	glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), vVector->items );
+	glEnableVertexAttribArray ( glprog.vertex_handle );
+	glVertexAttribPointer ( glprog.texture_handle, 2, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (GLfloat*)vVector->items+2 );
+	glEnableVertexAttribArray ( glprog.texture_handle );
 
-	glUniform1i ( m_impl->gl_pgm[GL_PROGRAM_FONT].sampler_handle, 0);
+	glUniform1i ( glprog.sampler_handle, 0);
 
 	glDrawArrays ( GL_TRIANGLES, 0, vVector->size/4 );
 #endif

@@ -593,7 +593,7 @@ texture_font_get_glyph( texture_font_t * self,
         glyph->s1 = (region.x+3)/(float)width;
         glyph->t1 = (region.y+3)/(float)height;
         vector_push_back( self->glyphs, &glyph );
-        return glyph; //*(texture_glyph_t **) vector_back( self->glyphs );
+        return glyph;
     }
 
     /* Glyph has not been already loaded */

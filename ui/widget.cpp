@@ -15,7 +15,11 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
 	m_parent 	= parent;
     m_bgcolor 	= FColor(0., 0., 0., 1.);
     m_fgcolor 	= FColor(1., 1., 1., 1.);
+    m_bg_gradient_enabled = false;
     
+    m_bg_gradient_top = FColor(0.0f,0.0f,.2f, 1.f);
+    m_bg_gradient_bottom = FColor(.2f,.2f,.2f, 1.0f);
+
     if ((width == 0 || height == 0) && parent){
     	m_bbox = IBbox(x, x + parent->w(), y, y +  parent->h());
     } else {
@@ -29,7 +33,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_callbackdata 	= NULL;
     m_transparent	= false;
     m_fixed_width 	= m_fixed_height = -1;
-    m_horizontal_margin = m_vertical_margin = 1;
+    m_horizontal_margin = m_vertical_margin = 0;
     use_default_font();
 
     matrix4_identity(m_model_matrix);
@@ -141,6 +145,10 @@ void Widget::internal_draw(bool force)
     painter().scissor_begin( bscr.xmin(), bscr.ymin(), bscr.width(), bscr.height() );
     if (!m_transparent)
     	painter().clear_color_buffer(m_bgcolor);
+
+    if (m_bg_gradient_enabled)
+    	painter().draw_quad_gradient(0, 0, w(), h(), m_bg_gradient_top, m_bg_gradient_bottom);
+
     painter().color(m_fgcolor);
     // Call widget custom draw method
     draw();
@@ -196,7 +204,10 @@ Widget::destroy_children()
 	std::vector<Widget*>::iterator it = m_children_widgets.begin();
     for (; it != m_children_widgets.end(); ++it){
         (*it)->destroy_children();
+        COMPOSITOR->advert_widget_deleted(*it);
+        delete(*it);
     }
+    m_children_widgets.clear();
 }
 
 void

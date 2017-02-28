@@ -5,12 +5,14 @@
 #include "scroll.h"
 #include "slider.h"
 #include "tab_widget.h"
+#include "file_chooser.h"
 
 int main(int argn, char** args)
 {
     Widget* parent = COMPOSITOR->create_new_window();
+    parent->backgroung_gradient_enable(true);
 
-    Tab_widget* tab = new Tab_widget(100, 100, 300, 300, "tab", parent);
+    Tab_widget* tab = new Tab_widget(300, 300, 300, 300, "tab", parent);
     Scroll* scroll = new Scroll(0, 0, 300, 500, "Radio tab", parent);
 
     Layout* layout = new Layout(0, 0, 350, 500, "Child", scroll, LAYOUT_VERTICAL);
@@ -31,6 +33,8 @@ int main(int argn, char** args)
 
     tab->add_tab(scroll);
     tab->add_tab(lbl2);
+
+    File_chooser* fc = new File_chooser(0, 0, 300, 400, "", parent);
 
     return COMPOSITOR->run();
 }

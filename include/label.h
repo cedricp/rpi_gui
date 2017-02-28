@@ -22,7 +22,12 @@ class Label : public Widget
 	Text_data m_label_info;
 protected:
 	virtual void draw();
+	bool mouse_release_event(int button){
+		do_callback();
+		return true;
+	}
 public:
+	~Label();
 	Label(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
 	void alignment(halign h, valign v);
 	void label(std::string);

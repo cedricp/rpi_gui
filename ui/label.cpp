@@ -7,6 +7,11 @@ Label::Label(int x, int y, int width, int height, const char* name, Widget* pare
 	label(name);
 }
 
+Label::~Label()
+{
+
+}
+
 void
 Label::alignment(halign h, valign v)
 {
@@ -20,6 +25,8 @@ Label::label(std::string l)
 	painter().build_text(m_font_id, l.c_str(), 0, 0, m_label_info);
 	dirty(true);
 }
+
+
 
 void
 Label::draw()

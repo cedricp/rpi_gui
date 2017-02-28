@@ -195,6 +195,18 @@ Compositor* Compositor::get_singleton()
     return GLOBAL_COMPOSITOR;
 }
 
+void
+Compositor::advert_widget_deleted(Widget* w)
+{
+	// We must clear caches to avoid reading a bad widget pointer
+	if (m_focus_drag_widget == w){
+		m_focus_drag_widget = NULL;
+	}
+	if (m_impl->widget_under_mouse == w){
+		m_impl->widget_under_mouse = NULL;
+	}
+}
+
 void 
 Compositor::add_widget(Widget* w)
 {
@@ -518,8 +530,10 @@ Compositor::run()
         }
     }
 
-    for(it = m_widgets.begin(); it != m_widgets.end();++it)
+    for(it = m_widgets.begin(); it != m_widgets.end();++it){
     	(*it)->destroy_children();
+    	delete (*it);
+    }
 
     finish();
     return 0;

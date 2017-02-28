@@ -44,7 +44,9 @@ protected:
     Widget 		*m_parent;
     FColor 		m_bgcolor;
     FColor 		m_fgcolor;
+    FColor		m_bg_gradient_bottom, m_bg_gradient_top;
     int 		m_font_id;
+    bool		m_bg_gradient_enabled;
     Matrix		m_projection_matrix, m_model_matrix;
     void		do_callback(Widget* w, void* arg);
     void		do_callback();
@@ -81,6 +83,10 @@ public:
     
     void bg_color(const FColor& color){
         m_bgcolor = color;
+    }
+
+    void backgroung_gradient_enable(bool e){
+    	m_bg_gradient_enabled = e;
     }
 
     int w();

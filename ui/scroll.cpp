@@ -50,6 +50,14 @@ Scroll::set_scroll_widget(Widget* scroll_widget)
 	if (m_scroll_widget->parent() != this){
 		m_scroll_widget->parent(this);
 	}
+	reset();
+}
+
+void
+Scroll::reset()
+{
+	if (!m_scroll_widget)
+		return;
 	m_scroll_widget->x(0);
 	m_scroll_widget->y(0);
 }

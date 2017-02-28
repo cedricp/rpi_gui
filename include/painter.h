@@ -88,6 +88,7 @@ public:
 
 	void draw_text(const Text_data& data);
 	void draw_quad(int x, int y, int width, int height, bool fill, bool solid = false, float linewidth = 1.0);
+	void draw_quad_gradient(int x, int y, int width, int height, FColor& color_top, FColor& color_bottom);
 
 	bool build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data);
 

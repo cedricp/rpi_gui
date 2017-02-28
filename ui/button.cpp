@@ -19,7 +19,8 @@ Button::Button(int x, int y, int width, int height, const char* name, Widget* pa
 
 Button::~Button()
 {
-	painter().delete_texture(m_image_id);
+	if(m_image_id!=(unsigned int)-1)
+		painter().delete_texture(m_image_id);
 	if (m_rounded_rect_data)
 		delete m_rounded_rect_data;
 }
