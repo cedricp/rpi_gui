@@ -14,6 +14,7 @@ Button::Button(int x, int y, int width, int height, const char* name, Widget* pa
 	m_style = STYLE_ROUNDED_FILLED;
 	m_toggled = false;
 	m_icon_align = ICON_ALIGN_LEFT;
+
 	label(name);
 }
 
@@ -63,9 +64,14 @@ Button::image(std::string image_filename)
 
 void
 Button::draw(){
+	IBbox area;
+	drawing_area(area);
+	int dah = area.height();
+	int daw = area.width();
+
 	int x, y;
-	const int ww = w() - m_horizontal_margin * 2;
-	const int hh = h() - m_vertical_margin * 2;
+	const int ww = daw - m_horizontal_margin * 2;
+	const int hh = dah - m_vertical_margin * 2;
 	if (m_icon_align == ICON_ALIGN_CENTER){
 		x = (ww - m_imgw) / 2;
 		y = (hh - m_imgh) / 2;
@@ -77,8 +83,6 @@ Button::draw(){
 		y = (hh - m_imgh) / 2;
 	}
 
-	IBbox area;
-	drawing_area(area);
 	FBbox areaf(area.xmin(), area.xmax(), area.ymin(), area.ymax());
 	painter().disable_texture();
 
@@ -87,8 +91,8 @@ Button::draw(){
 			m_rounded_rect_data = painter().build_solid_rounded_rectangle(areaf, 8, 10);
 		painter().draw_solid_rounded_rectangle(*m_rounded_rect_data);
 	} else if (m_style == STYLE_TAB){
-		float hh = h();
-		float ww = w();
+		float hh = dah;
+		float ww = daw;
 		float vtx[] = { 0,hh, 0,0, ww - 8,0, ww,8, ww,hh };
 		vertex_container vc(10);
 		memcpy(vc.data(), vtx, 10*sizeof(float));
@@ -161,6 +165,7 @@ Button::mouse_release_event(int button){
 
 bool
 Button::enter_event(){
+	Widget::enter_event();
 	if (m_toggled)
 		return false;
 	m_fgcolor = m_color_hover;

@@ -16,9 +16,10 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_bgcolor 	= FColor(0., 0., 0., 1.);
     m_fgcolor 	= FColor(1., 1., 1., 1.);
     m_bg_gradient_enabled = false;
+    m_is_root	= false;
     
-    m_bg_gradient_top = FColor(0.0f,0.0f,.2f, 1.f);
-    m_bg_gradient_bottom = FColor(.2f,.2f,.2f, 1.0f);
+    m_bg_gradient_top = FColor(0.2f,0.2f,.2f, 1.f);
+    m_bg_gradient_bottom = FColor(.5f,.5f,.5f, 1.0f);
 
     if ((width == 0 || height == 0) && parent){
     	m_bbox = IBbox(x, x + parent->w(), y, y +  parent->h());
@@ -35,6 +36,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_fixed_width 	= m_fixed_height = -1;
     m_horizontal_margin = m_vertical_margin = 0;
     use_default_font();
+    m_pattern_texture = painter().create_texture_bmp("carbon", "carbon.bmp");
 
     matrix4_identity(m_model_matrix);
 
@@ -47,6 +49,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
 
 Widget::~Widget()
 {
+	painter().delete_texture(m_pattern_texture);
     delete m_impl;
     std::vector<float*>::iterator it = m_model_matrix_stack.begin();
     for (; it != m_model_matrix_stack.end(); ++it)
@@ -147,7 +150,7 @@ void Widget::internal_draw(bool force)
     	painter().clear_color_buffer(m_bgcolor);
 
     if (m_bg_gradient_enabled)
-    	painter().draw_quad_gradient(0, 0, w(), h(), m_bg_gradient_top, m_bg_gradient_bottom);
+    	painter().draw_quad_gradient(0, 0, w(), h(), m_bg_gradient_top, m_bg_gradient_bottom, m_pattern_texture, 18);
 
     painter().color(m_fgcolor);
     // Call widget custom draw method
@@ -176,12 +179,7 @@ Widget::resize(int w, int h)
 void
 Widget::parent_resize_event(const IBbox& bbox)
 {
-//	if(m_bbox.width() > m_parent->w()){
-//		m_bbox.width(m_parent->w());
-//	}
-//	if (m_bbox.height() > m_parent->h()){
-//		m_bbox.height(m_parent->h());
-//	}
+
 }
 
 void
@@ -312,7 +310,24 @@ Widget::damage(const IBbox& other)
 bool
 Widget::enter_event()
 {
+	if (m_parent && m_parent->root()){
+		m_parent->set_top_widget(this);
+		dirty(true);
+		return true;
+	} else if (m_parent){
+		return m_parent->enter_event();
+	}
 	return false;
+}
+
+void
+Widget::set_top_widget(Widget* w)
+{
+	std::vector<Widget*>::iterator it = std::find(m_children_widgets.begin(), m_children_widgets.end(), w);
+	if (it == m_children_widgets.end())
+		return;
+	m_children_widgets.erase(it);
+	m_children_widgets.push_back(w);
 }
 
 bool
@@ -330,6 +345,12 @@ Widget::mouse_press_event(int button)
 void
 Widget::timer_event(void* data)
 {
+}
+
+bool
+Widget::custom_event(void* data)
+{
+	return false;
 }
 
 bool Widget::mouse_release_event(int button)
@@ -447,17 +468,21 @@ Widget::get_all_children(std::vector<Widget*>& list)
 }
 
 bool
-Widget::internal_mouse_motion_event(int x, int y, Widget **w){
+Widget::internal_mouse_motion_event(int xx, int yy, Widget **w){
 	if (hidden()) return false;
-	std::vector<Widget*>::iterator it = m_children_widgets.begin();
-	for (; it < m_children_widgets.end(); ++it){
-		bool infocus = (*it)->screen_bbox().contains(x, y);
+	std::vector<Widget*>::reverse_iterator it = m_children_widgets.rbegin();
+	for (; it < m_children_widgets.rend(); ++it){
+		bool infocus = (*it)->screen_bbox().contains(xx, yy);
 		if (infocus){
-			 bool ev = (*it)->internal_mouse_motion_event(x, y, w);
+			 bool ev = (*it)->internal_mouse_motion_event(xx, yy, w);
 			 if (ev)
 				 break;
 		}
 	}
+
+	int xp, yp;
+	mouse_pos(xp, yp);
+	mouse_motion_event(xp, yp);
 
 	if(*w == NULL){
 		*w = this;
@@ -467,13 +492,22 @@ Widget::internal_mouse_motion_event(int x, int y, Widget **w){
 	return false;
 }
 
+void
+Widget::mouse_pos(int& x, int& y)
+{
+	COMPOSITOR->mouse_position(x, y);
+	IBbox b = screen_bbox();
+	x -= b.xmin();
+	y -= b.ymin();
+}
+
 bool
 Widget::internal_mouse_button_event(int x, int y, int button, Widget **w, bool press)
 {
 	if (hidden()) return false;
 
-	std::vector<Widget*>::iterator it = m_children_widgets.begin();
-	for (; it < m_children_widgets.end(); ++it){
+	std::vector<Widget*>::reverse_iterator it = m_children_widgets.rbegin();
+	for (; it < m_children_widgets.rend(); ++it){
 		bool infocus = (*it)->screen_bbox().contains(x, y);
 		if (infocus){
 			 bool ev = (*it)->internal_mouse_button_event(x, y, button, w, press);
@@ -501,8 +535,8 @@ bool
 Widget::internal_mouse_wheel_event(int x, int y, int we, Widget **w)
 {
 	if (hidden()) return false;
-	std::vector<Widget*>::iterator it = m_children_widgets.begin();
-	for (; it < m_children_widgets.end(); ++it){
+	std::vector<Widget*>::reverse_iterator it = m_children_widgets.rbegin();
+	for (; it < m_children_widgets.rend(); ++it){
 		bool infocus = (*it)->screen_bbox().contains(x, y);
 		if (infocus){
 			 bool ev = (*it)->internal_mouse_wheel_event(x, y, we, w);

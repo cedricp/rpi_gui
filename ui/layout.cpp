@@ -3,6 +3,7 @@
 Layout::Layout(int x, int y, int w, int h, const char* name, Widget* parent, Layout_style style) : Widget(x, y, w, h, name, parent)
 {
 	m_style = style;
+	m_autoresize = false;
 }
 
 Layout::~Layout()
@@ -15,6 +16,15 @@ Layout::set_style(Layout_style style)
 {
 	m_style = style;
 	compute_layout();
+}
+
+void
+Layout::parent_resize_event(const IBbox& bbox)
+{
+	if (m_autoresize){
+		resize(bbox.xmin(), bbox.ymin(), bbox.width(), bbox.height());
+		compute_layout();
+	}
 }
 
 void

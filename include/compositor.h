@@ -45,6 +45,8 @@ public:
     void 	remove_widget(Widget* w);
     void 	add_widget(Widget* w);
     bool 	widget_exists(Widget* w);
+    void 	set_root_widget(Widget* w);
+    void	set_top_widget(Widget* w);
     Widget *get_root_widget();
     Widget *get_top_widget();
     Widget *create_new_window();

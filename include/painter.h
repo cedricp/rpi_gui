@@ -20,7 +20,14 @@ struct Text_data{
 
 enum TextureMode {
 	TEXTURE_RGBA,
+	TEXTURE_RGB,
 	TEXTURE_ALPHA
+};
+
+enum TextureBorder {
+	TEXBORDER_CLAMP,
+	TEXBORDER_REPEAT,
+	TEXBORDER_MIRROR_REPEAT
 };
 
 class Vec2f{
@@ -88,15 +95,15 @@ public:
 
 	void draw_text(const Text_data& data);
 	void draw_quad(int x, int y, int width, int height, bool fill, bool solid = false, float linewidth = 1.0);
-	void draw_quad_gradient(int x, int y, int width, int height, FColor& color_top, FColor& color_bottom);
+	void draw_quad_gradient(int x, int y, int width, int height, FColor& color_top, FColor& color_bottom, int pattern_texture = -1, float pattern_size = 1);
 
 	bool build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data);
 
 	void delete_texture(unsigned int idx);
-	void delete_texture(std::string name);
 	void texture_size(std::string name, int& w, int& h);
 	unsigned int create_texture_svg(std::string name,std::string filename);
-	unsigned int create_texture(std::string name, const char* img, int w, int h, TextureMode mode = TEXTURE_RGBA);
+	unsigned int create_texture_bmp(std::string name, std::string filename);
+	unsigned int create_texture(std::string name, const char* img, int w, int h, TextureMode mode = TEXTURE_RGBA, TextureBorder = TEXBORDER_REPEAT);
 	bool use_texture(std::string name);
 	void use_texture(unsigned int texid);
 	void disable_texture();

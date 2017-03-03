@@ -1,5 +1,6 @@
 #include "painter.h"
 #include "bbox.h"
+#include "compositor.h"
 #include "string_utils.h"
 #include "shaders_gl.h"
 
@@ -98,6 +99,63 @@ Text_data::~Text_data(){
 	delete data;
 };
 
+#pragma pack(push, 1)
+// Stupid M$ window$ definitions
+typedef int LONG;
+typedef unsigned short WORD;
+typedef unsigned int DWORD;
+
+
+struct BITMAPFILEHEADER {
+  WORD  bfType;
+  DWORD bfSize;
+  WORD  bfReserved1;
+  WORD  bfReserved2;
+  DWORD bfOffBits;
+
+  DWORD biSize;
+  LONG  biWidth;
+  LONG  biHeight;
+  WORD  biPlanes;
+  WORD  biBitCount;
+  DWORD biCompression;
+  DWORD biSizeImage;
+  LONG  biXPelsPerMeter;
+  LONG  biYPelsPerMeter;
+  DWORD biClrUsed;
+  DWORD biClrImportant;
+};
+#pragma pack(pop)
+// Very naive BMP loader implementation
+char*
+load_bmp_texture(const char * pic, int& width, int &height, int& num_channel)
+{
+	BITMAPFILEHEADER bmpHeaderFile;
+	char* data;
+	FILE * picfile;
+
+	picfile = fopen(pic, "rb");
+	if (picfile == NULL)
+	return NULL;
+
+	fread((void*)&bmpHeaderFile, sizeof(BITMAPFILEHEADER), 1, picfile);
+	if (bmpHeaderFile.bfType != 0x4D42)
+		return NULL;
+
+	width = bmpHeaderFile.biWidth;
+	height = bmpHeaderFile.biHeight;
+
+	num_channel = bmpHeaderFile.biBitCount / 8;
+
+	data = (char *)malloc(bmpHeaderFile.biSizeImage);
+
+	fseek(picfile, bmpHeaderFile.bfOffBits, SEEK_SET);
+	fread((void*)data, bmpHeaderFile.biSizeImage, 1, picfile);
+
+	fclose(picfile);
+
+	return data;
+}
 
 void generate_text(Text_data& td)
 {
@@ -537,7 +595,34 @@ Painter::create_texture_svg(std::string name, std::string filename)
 }
 
 unsigned int
-Painter::create_texture(std::string name, const char* img, int w, int h, TextureMode mode)
+Painter::create_texture_bmp(std::string name, std::string filename)
+{
+	std::string fullpath;
+
+	if (m_impl->textures.find(name) != m_impl->textures.end()){
+		m_impl->textures[name].ref_count++;
+		return m_impl->textures[name].texid;
+	}
+
+	if (!locate_resource(filename, fullpath)){
+		fullpath = filename;
+	}
+
+	int w, h, n;
+	char* img;
+	img = ::load_bmp_texture(fullpath.c_str(), w, h, n);
+	if(!img){
+		std::cerr << "Painter::create_texture_bmp : cannot load image file " << filename << std::endl;
+		return 0;
+	}
+	int texid = create_texture(name, img, w, h, TEXTURE_RGB);
+
+	free(img);
+	return texid;
+}
+
+unsigned int
+Painter::create_texture(std::string name, const char* img, int w, int h, TextureMode mode, TextureBorder border)
 {
 	if (m_impl->textures.find(name) != m_impl->textures.end()){
 		m_impl->textures[name].ref_count++;
@@ -547,12 +632,28 @@ Painter::create_texture(std::string name, const char* img, int w, int h, Texture
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
-	//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	switch(border){
+	case TEXBORDER_REPEAT:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		break;
+	case TEXBORDER_CLAMP:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		break;
+	case TEXBORDER_MIRROR_REPEAT:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		break;
+	}
 
 	if (mode == TEXTURE_RGBA)
 		glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+	else if (mode == TEXTURE_RGB)
+		glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 	else if (mode == TEXTURE_ALPHA)
 		glTexImage2D(GL_TEXTURE_2D, 0,GL_ALPHA, w, h, 0, GL_ALPHA, GL_UNSIGNED_BYTE, img);
 
@@ -569,22 +670,9 @@ Painter::delete_texture(unsigned int idx){
 		if (it->second.texid == idx)
 			break;
 	}
+
 	if (it == m_impl->textures.end()){
 		std::cerr << "Painter::delete_texture : cannot delete texture #" << idx << std::endl;
-		return;
-	}
-
-	glDeleteTextures( 1, &idx );
-	m_impl->textures.erase(it);
-}
-
-void
-Painter::delete_texture(std::string name){
-	std::map<std::string, Img_info>::iterator it;
-	it = m_impl->textures.find(name);
-
-	if (it == m_impl->textures.end()){
-		std::cerr << "Painter::delete_texture : cannot delete named texture " << name << std::endl;
 		return;
 	}
 
@@ -592,7 +680,7 @@ Painter::delete_texture(std::string name){
 	if (it->second.ref_count > 0)
 		return;
 
-	glDeleteTextures(1, &it->second.texid);
+	glDeleteTextures( 1, &idx );
 	m_impl->textures.erase(it);
 }
 
@@ -647,25 +735,34 @@ Painter::texture_size(std::string name, int& w, int& h)
 
 
 void
-Painter::draw_quad_gradient(int x, int y, int width, int height, FColor& color_top, FColor& color_bottom)
+Painter::draw_quad_gradient(int x, int y, int width, int height, FColor& color_top, FColor& color_bottom, int pattern_texture, float pattern_size)
 {
-	disable_texture();
+	if (pattern_texture >= 0){
+		use_texture(pattern_texture);
+	} else
+		disable_texture();
 #ifdef USE_OPENGL
+	if (pattern_texture >= 0)
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	float xx = x;
+	float yy = y;
+	glColor3f(1,1,1);
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 0);
+	glTexCoord2f(xx/pattern_size, yy/pattern_size);
 	glColor3f(color_top.red(), color_top.green(), color_top.blue());
 	glVertex2f(x, y);
-	glTexCoord2f(0, 1);
+	glTexCoord2f(xx/pattern_size, height/pattern_size);
 	glColor3f(color_bottom.red(), color_bottom.green(), color_bottom.blue());
 	glVertex2f(x , height);
-	glTexCoord2f(1, 1);
+	glTexCoord2f(width/pattern_size, height/pattern_size);
 	glColor3f(color_bottom.red(), color_bottom.green(), color_bottom.blue());
 	glVertex2f(width, height);
-	glTexCoord2f(1, 0);
+	glTexCoord2f(width/pattern_size, yy/pattern_size);
 	glColor3f(color_top.red(), color_top.green(), color_top.blue());
-	glVertex2f(width, y);
+	glVertex2f(width, yy);
 	glEnd();
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 #else
 	float xx = x;
 	float yy = y;

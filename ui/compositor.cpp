@@ -222,6 +222,31 @@ Compositor::get_root_widget()
     return NULL;
 }
 
+void
+Compositor::set_top_widget(Widget* w)
+{
+    if (m_widgets.size() > 0){
+    	std::vector<Widget*>::iterator it = std::find(m_widgets.begin(), m_widgets.end(), w);
+    	if (it == m_widgets.end())
+    		return;
+    	m_widgets.erase(it);
+    	m_widgets.push_back(w);
+    }
+}
+
+void
+Compositor::set_root_widget(Widget* w)
+{
+    if (m_widgets.size() > 0){
+    	std::vector<Widget*>::iterator it = std::find(m_widgets.begin(), m_widgets.end(), w);
+    	if (it == m_widgets.end())
+    		return;
+        Widget* current_root = m_widgets[0];
+        m_widgets[0] = w;
+        *it = current_root;
+    }
+}
+
 Widget*
 Compositor::get_top_widget()
 {
@@ -389,8 +414,9 @@ Compositor::handle_mouse_move_event(int x, int y)
     if (m_impl->widget_under_mouse){
     	if (m_impl->widget_under_mouse != which){
     		taken |= m_impl->widget_under_mouse->leave_event();
-    		if (which)
+    		if (which){
     			taken |= which->enter_event();
+    		}
     		m_impl->widget_under_mouse = which;
     	}
     } else {
@@ -406,6 +432,7 @@ Compositor::create_new_window()
     int w, h;
     SDL_GetWindowSize(m_impl->window, &w, &h);
     Widget* new_widget = new Widget(0, 0, w, h, "Window", NULL);
+    new_widget->root(true);
     return new_widget;
 }
 
@@ -475,6 +502,9 @@ Compositor::run()
 				switch (event.user.code){
 				case TIMER_EVENT:
 					((Widget*)event.user.data1)->timer_event(event.user.data2);
+					break;
+				case USER_EVENT:
+					need_update |= ((Widget*)event.user.data1)->custom_event(event.user.data2);
 					break;
 				default:
 					break;

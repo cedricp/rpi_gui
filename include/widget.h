@@ -20,7 +20,7 @@ typedef WCallback* WCallback_p;
 class Widget{
     friend class Compositor;
     IBbox   	m_bbox;
-    bool   		m_visibility, m_transparent;
+    bool   		m_visibility, m_transparent, m_is_root;
     WCallback	*m_callback;
     void		*m_callbackdata;
     std::string m_name;
@@ -40,7 +40,7 @@ class Widget{
 
 protected:
     std::vector<Widget*> m_children_widgets;
-    int  		m_fixed_width, m_fixed_height, m_horizontal_margin, m_vertical_margin;
+    int  		m_fixed_width, m_fixed_height, m_horizontal_margin, m_vertical_margin, m_pattern_texture;
     Widget 		*m_parent;
     FColor 		m_bgcolor;
     FColor 		m_fgcolor;
@@ -61,6 +61,7 @@ protected:
     virtual bool mouse_motion_event(int x, int y);
     virtual bool drag_event(int rel_x, int rel_y);
     virtual void timer_event(void* data);
+    virtual bool custom_event(void* data);
     virtual bool accept_drag(int x, int y);
     virtual void widget_added_event(Widget* widget);
     virtual void init_viewport(int x, int y, int width, int height);
@@ -111,6 +112,8 @@ public:
     void translate(float x, float y, float z = 0.);
     void rotate(float x, float y, float z, float angle);
     
+    void mouse_pos(int&x, int&y);
+
     void hide();
     void show();
     void close();
@@ -124,6 +127,9 @@ public:
 
     void horizontal_margin(int h){m_horizontal_margin = h;}
     void vertical_margin(int h){m_vertical_margin = h;}
+
+    int horizontal_margin(){return m_horizontal_margin;}
+    int vertical_margin(){return m_vertical_margin;}
 
     bool hidden(){return !m_visibility;}
     void parent(Widget* w);
@@ -146,9 +152,13 @@ public:
     	m_horizontal_margin = w;
     }
 
+    void root(bool r){m_is_root = r;}
+    bool root(){return m_is_root;}
+
     void use_font(std::string font_name);
     void use_default_font();
     void load_font(std::string font_id, int size, int atlas_size = 1024);
+    void set_top_widget(Widget* w);
 
     void		 callback(WCallback* cb);
     void		 callback(WCallback* cb, void* user_data);
