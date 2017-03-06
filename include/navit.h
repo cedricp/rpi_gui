@@ -15,8 +15,6 @@ public:
 	Navit(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
 	~Navit();
 
-	virtual bool accept_drag(int x, int y);
-	virtual bool drag_event(int rel_x, int rel_y);
 	virtual bool mouse_release_event(int button);
 	virtual bool mouse_press_event(int button);
 	virtual bool mouse_motion_event(int x, int y);

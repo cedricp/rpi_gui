@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 static char * nicfifo = "/tmp/navit.command.fifo";
 static char * niififo = "/tmp/navit.image.fifo";
@@ -20,6 +21,8 @@ struct impl{
 		texid = (unsigned int)-1;
 	    SDL_memset(&event, 0, sizeof(SDL_Event));
 	    in_use = false;
+	    reset_image_thread = false;
+	    size_match = false;
 	}
 	SDL_Thread* sdl_thread;
 	SDL_Event 	event;
@@ -29,6 +32,8 @@ struct impl{
 	int w, h;
 	unsigned int texid;
 	bool in_use;
+	bool size_match;
+	bool reset_image_thread;
 };
 
 struct img_header{
@@ -56,6 +61,7 @@ read_image_thread(void* ptr)
 	impl* inst = (impl*)ptr;
 	int fd_image = -1;
 	img_header h;
+	struct stat st;
 
 	while(!inst->kill_thread){
 		if (fd_image < 0){
@@ -68,6 +74,10 @@ read_image_thread(void* ptr)
 		if (ret < 0 || errno == EPIPE){
 			fd_image = -1;
 			continue;
+		}
+
+		if (ret == 0){
+			goto no_data;
 		}
 
 		if (h.magic != 0xDEADBEEF){
@@ -96,8 +106,11 @@ read_image_thread(void* ptr)
 
 		if (ret > 0)
 			SDL_PushEvent(&inst->event);
-		else
-			usleep(5000);
+
+no_data:
+		usleep(5000);
+		close(fd_image);
+		fd_image = -1;
 	}
 
 	close(fd_image);
@@ -139,20 +152,14 @@ Navit::resize(int x, int y, int w, int h)
 bool
 Navit::custom_event(void* data)
 {
+	m_impl->in_use = true;
+	if (m_impl->w != w() || m_impl->h != h()){
+		resize(x(), y(), w(), h());
+		m_impl->in_use = false;
+		return true;
+	}
 	dirty(true);
 	return true;
-}
-
-bool
-Navit::accept_drag(int x, int y)
-{
-	return false;
-}
-
-bool
-Navit::drag_event(int rel_x, int rel_y)
-{
-	return false;
 }
 
 bool
@@ -195,7 +202,6 @@ Navit::leave_event()
 
 void
 Navit::draw(){
-	m_impl->in_use = true;
 	if (m_impl->texid != (unsigned int)-1)
 		painter().delete_texture(m_impl->texid);
 	m_impl->texid = painter().create_texture("navit_img", (char*)m_impl->data, m_impl->w, m_impl->h, TEXTURE_RGBA, TEXBORDER_CLAMP);

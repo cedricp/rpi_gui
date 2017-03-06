@@ -89,7 +89,7 @@ Compositor::Compositor()
         SDL_WINDOWPOS_UNDEFINED,           // initial x position
         SDL_WINDOWPOS_UNDEFINED,           // initial y position
         800,                               // width, in pixels
-        600,                               // height, in pixels
+        480,                               // height, in pixels
 		flags
     );
 
@@ -401,6 +401,7 @@ Compositor::handle_mouse_move_event(int x, int y)
     	m_drag_started = true;
     	return m_focus_drag_widget->drag_event(m_drag_x - x, m_drag_y - y);
     }
+
 
     std::vector<Widget*>::reverse_iterator it = m_widgets.rbegin();
     for (; it != m_widgets.rend(); ++it){
