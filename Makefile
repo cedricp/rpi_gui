@@ -54,13 +54,13 @@ else
 ifeq ($(BUILD),PI)
 PLATFORM=RPI
 LIB_FREETYPE2_LDFLAGS=-lfreetype
-LIB_FREETYPE2_CXXFLAGS=-I/usr/include/freetype2
+LIB_FREETYPE2_CXXFLAGS=-I$(SYSROOT)/usr/include/freetype2
 
 LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic
 LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_PI)/include
 
-LIB_GLES2_LDFLAGS=-L/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
-LIB_GLES2_CXXFLAGS=-I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/
+LIB_GLES2_LDFLAGS=-L$(SDL_ROOT_PI)/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
+LIB_GLES2_CXXFLAGS=-I$(SDL_ROOT_PI)/opt/vc/include -I$(SDL_ROOT_PI)/opt/vc/include/interface/vcos/pthreads/
 
 LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
 LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
@@ -128,4 +128,5 @@ make_paths:
 	@test -d $(INSTALL_LIB_DIR) || mkdir -p $(INSTALL_LIB_DIR)
 	@test -d $(BIN_DIR) || mkdir -p $(BIN_DIR)
 	@test -d $(INSTALL_RESOURCES_DIR)|| mkdir -p $(INSTALL_RESOURCES_DIR)
-	@cp -uf   resources/*.ttf resources/*.svg $(INSTALL_RESOURCES_DIR)
+	@cp -uf   resources/*.ttf $(INSTALL_RESOURCES_DIR)
+	#@test -f resources/*.svg | cp -uf resources/*.svg $(INSTALL_RESOURCES_DIR)

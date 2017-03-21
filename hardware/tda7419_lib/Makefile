@@ -8,9 +8,6 @@ SOURCES = $(wildcard *.cpp)
 OBJECTS = $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
 STATIC_LIB=$(HW_TDA7419_LIBRARY_NAME)
 
-DEP_DOT_D=$(SOURCES:.cpp=.d)
-DEPENDENCY_FILES=$(addprefix $(OBJECTS_DIR)/,$(DEP_DOT_D))	
-
 CXXFLAGS+=$(GLOBAL_CXX_FLAGS)
 LD_FLAGS+=
 
@@ -18,7 +15,7 @@ LD_FLAGS+=
 # Rules
 ###########################################################
 
-all: $(DEPENDENCY_FILES) $(STATIC_LIB)
+all: $(STATIC_LIB)
 	echo "Builing static library " $(STATIC_LIB)
 	
 $(OBJECTS_DIR)/%.o: %.cpp
@@ -34,8 +31,3 @@ $(OBJECTS_DIR)/%.d: %.cpp
 	@echo "Building dependencies for $<"
 	@$(CXX) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
 
-###########################################################
-# Dependencies check
-###########################################################
-
--include $(DEPENDENCY_FILES)

@@ -18,7 +18,7 @@ Tab_widget::add_tab(Widget* wid)
 	Button* button = m_tabs->add_button(wid->name());
 	button->style(Button::STYLE_TAB);
 	m_widgets.push_back(wid);
-	button->callback(static_button_callback, (void*)this);
+	attachCallback(button, static_button_callback);
 	button->id(m_widgets.size()-1);
 
 	// First widget

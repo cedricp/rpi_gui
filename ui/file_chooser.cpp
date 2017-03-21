@@ -108,14 +108,14 @@ File_chooser::set_path(std::string path)
 		label_dir->alignment(ALIGN_LEFT, ALIGN_CENTERV);
 		label_dir->fixed_height(20);
 		label_dir->fg_color(FColor(0.2, 0, 1, 1));
-		label_dir->callback(static_dir_callback, (void*)this);
+		attachCallback(label_dir, static_dir_callback);
 		label_dir->transparent(true);
 	}
 	for (int i = 0; i < files.size(); ++i){
 		Label* label_file = new Label(0, 0, m_files_layout->w(), 20, files[i].c_str(), m_files_layout);
 		label_file->alignment(ALIGN_LEFT, ALIGN_CENTERV);
 		label_file->fixed_height(20);
-		label_file->callback(static_file_callback, (void*)this);
+		attachCallback(label_file, static_file_callback);
 		label_file->transparent(true);
 	}
 

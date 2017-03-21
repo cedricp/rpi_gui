@@ -14,7 +14,7 @@ static char * nicfifo = "/tmp/navit.command.fifo";
 static char * niififo = "/tmp/navit.image.fifo";
 
 struct impl{
-	impl(){
+	impl(Widget* wg){
 		kill_thread = 0;
 		data = NULL;
 		data_size = 0;
@@ -23,6 +23,15 @@ struct impl{
 	    in_use = false;
 	    reset_image_thread = false;
 	    size_match = false;
+	    h = w = 0;
+	    sdl_thread = NULL;
+		Uint32 evt = SDL_RegisterEvents(1);
+		if (evt != ((Uint32)-1)) {
+		    event.type = evt;
+		    event.user.code = USER_EVENT;
+		    event.user.data1 = wg;
+		    event.user.data2 = 0;
+		}
 	}
 	SDL_Thread* sdl_thread;
 	SDL_Event 	event;
@@ -46,9 +55,11 @@ struct img_header{
 static bool
 send_cmd(char* command)
 {
+	std::string cmd = command;
+	cmd += "\n";
 	int command_fd = open(nicfifo, O_WRONLY | O_NONBLOCK);
 	if (command_fd >= 0){
-		write(command_fd, command, strlen(command));
+		int ret = write(command_fd, cmd.c_str(), cmd.size());
 		::close(command_fd);
 		return true;
 	}
@@ -65,9 +76,8 @@ read_image_thread(void* ptr)
 
 	while(!inst->kill_thread){
 		if (fd_image < 0){
-			usleep(5000);
+			usleep(500);
 			fd_image = open(niififo, O_RDONLY | O_NONBLOCK);
-			continue;
 		}
 
 		int ret = read(fd_image, &h, sizeof(img_header));
@@ -82,6 +92,12 @@ read_image_thread(void* ptr)
 
 		if (h.magic != 0xDEADBEEF){
 			std::cout << "bad header..." << std::endl;
+			char dummy;
+			size_t cnt = 1;
+			// Flush remaining data
+			while(cnt > 0){
+				cnt = read(fd_image, &dummy, 1);
+			}
 			continue;
 		}
 
@@ -104,11 +120,11 @@ read_image_thread(void* ptr)
 			continue;
 		}
 
-		if (ret > 0)
+		if (ret > 0 && inst->event.type != (Uint32)-1)
 			SDL_PushEvent(&inst->event);
 
 no_data:
-		usleep(5000);
+		usleep(500);
 		close(fd_image);
 		fd_image = -1;
 	}
@@ -119,15 +135,7 @@ no_data:
 
 Navit::Navit(int x, int y, int width, int height, const char* name, Widget* parent) : Widget(x, y, width, height, name, parent)
 {
-	m_impl = new impl;
-
-	Uint32 evt = SDL_RegisterEvents(1);
-	if (evt != ((Uint32)-1)) {
-	    m_impl->event.type = evt;
-	    m_impl->event.user.code = USER_EVENT;
-	    m_impl->event.user.data1 = this;
-	    m_impl->event.user.data2 = 0;
-	}
+	m_impl = new impl(this);
 
 	m_impl->sdl_thread = SDL_CreateThread(read_image_thread, "navit_image", (void*)m_impl);
 	resize(x, y, width, height);
@@ -158,6 +166,7 @@ Navit::custom_event(void* data)
 		m_impl->in_use = false;
 		return true;
 	}
+	m_impl->in_use = false;
 	dirty(true);
 	return true;
 }
@@ -204,6 +213,7 @@ void
 Navit::draw(){
 	if (m_impl->texid != (unsigned int)-1)
 		painter().delete_texture(m_impl->texid);
+
 	m_impl->texid = painter().create_texture("navit_img", (char*)m_impl->data, m_impl->w, m_impl->h, TEXTURE_RGBA, TEXBORDER_CLAMP);
 	painter().use_texture(m_impl->texid);
 	painter().draw_quad(0,0, w(), h(), true);
