@@ -10,6 +10,7 @@
 
 struct WImpl;
 class Widget;
+struct UIEvent;
 
 typedef void (WCallback )(Widget*, void*);
 typedef WCallback* WCallback_p;
@@ -40,7 +41,8 @@ class Widget{
 
 protected:
     std::vector<Widget*> m_children_widgets;
-    int  		m_fixed_width, m_fixed_height, m_horizontal_margin, m_vertical_margin, m_pattern_texture;
+    int  		m_fixed_width, m_fixed_height, m_horizontal_margin, m_vertical_margin;
+    unsigned int m_pattern_texture;
     Widget 		*m_parent;
     FColor 		m_bgcolor;
     FColor 		m_fgcolor;
@@ -136,6 +138,10 @@ public:
     void update(bool full_redraw = false);
     void damage(const IBbox& other);
     void transparent(bool on){m_transparent = on;}
+    void set_background_tiles(std::string filename);
+
+    UIEvent* create_event(void* data = NULL);
+    void push_event(UIEvent* evt);
 
     static Painter& painter();
 

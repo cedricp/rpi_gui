@@ -52,14 +52,13 @@ Button::toggled()
 void
 Button::image(std::string image_filename)
 {
-	std::string image_name = string_basename(image_filename);
-	m_image_id = painter().create_texture_svg(image_name, image_filename);
+	m_image_id = painter().create_texture_svg(image_filename);
 	if (m_image_id == -1){
 		std::cerr << "Button::set_image : Image not loaded " <<  image_filename << std::endl;
 		m_imgh = m_imgw = 0;
 		return;
 	}
-	painter().texture_size(image_name, m_imgw, m_imgh);
+	painter().texture_size(image_filename, m_imgw, m_imgh);
 }
 
 void

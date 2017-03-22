@@ -8,7 +8,7 @@ SOURCES = $(wildcard *.cpp)
 OBJECTS = $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
 STATIC_LIB=$(HW_FM_LIBRARY_NAME)
 
-CXXFLAGS+=$(GLOBAL_CXX_FLAGS) -I../../utils
+CXXFLAGS+=$(GLOBAL_CXX_FLAGS) -I../include
 LD_FLAGS+=
 
 ###########################################################

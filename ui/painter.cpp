@@ -223,7 +223,7 @@ Painter::Painter()
 	init_gles2();
 #endif
 	std::string font_file;
-	std::string font_name = "white_rabbit.ttf";
+	std::string font_name = "fonts/white_rabbit.ttf";
 	if( locate_resource(font_name, font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 16);
 	} else {
@@ -624,11 +624,11 @@ error:
 }
 
 unsigned int
-Painter::create_texture_svg(std::string name, std::string filename)
+Painter::create_texture_svg(std::string filename)
 {
-	if (m_impl->textures.find(name) != m_impl->textures.end()){
-		m_impl->textures[name].ref_count++;
-		return m_impl->textures[name].texid;
+	if (m_impl->textures.find(filename) != m_impl->textures.end()){
+		m_impl->textures[filename].ref_count++;
+		return m_impl->textures[filename].texid;
 	}
 
 	int w, h;
@@ -636,22 +636,22 @@ Painter::create_texture_svg(std::string name, std::string filename)
 	img = load_svg_image(filename, w, h);
 	if(!img){
 		std::cerr << "Painter::create_texture_svg : cannot load image file " << filename << std::endl;
-		return 0;
+		return -1;
 	}
-	int texid = create_texture(name, img, w, h);
+	int texid = create_texture(filename, img, w, h);
 
 	free(img);
 	return texid;
 }
 
 unsigned int
-Painter::create_texture_bmp(std::string name, std::string filename)
+Painter::create_texture_bmp(std::string filename)
 {
 	std::string fullpath;
 
-	if (m_impl->textures.find(name) != m_impl->textures.end()){
-		m_impl->textures[name].ref_count++;
-		return m_impl->textures[name].texid;
+	if (m_impl->textures.find(filename) != m_impl->textures.end()){
+		m_impl->textures[filename].ref_count++;
+		return m_impl->textures[filename].texid;
 	}
 
 	if (!locate_resource(filename, fullpath)){
@@ -665,7 +665,7 @@ Painter::create_texture_bmp(std::string name, std::string filename)
 		std::cerr << "Painter::create_texture_bmp : cannot load image file " << filename << std::endl;
 		return 0;
 	}
-	int texid = create_texture(name, img, w, h, TEXTURE_RGB);
+	int texid = create_texture(filename, img, w, h, TEXTURE_RGB);
 
 	free(img);
 	return texid;

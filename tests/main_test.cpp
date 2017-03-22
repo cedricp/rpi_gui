@@ -28,16 +28,16 @@ int main(int argn, char** args)
     Label* lbl2 = new Label(0, 0, 100, 80, "MP3 & Music content", parent);
     lbl2->bg_color(FColor(0,0,.6,1.));
 
-    button->image("icon-111-search.svg");
-    button2->image("icon-111-search.svg");
-    button3->image("icon-111-search.svg");
+    button->image("svg/search.svg");
+    button2->image("svg/search.svg");
+    button3->image("svg/search.svg");
     layout->bg_color(FColor(.1, .2, .3, 1.0));
     scroll->bg_color(FColor(.8, .8, .8, 1.0));
 
     tab->add_tab(scroll);
     tab->add_tab(lbl2);
 
-    File_chooser* fc = new File_chooser(0, 0, 300, 400, "", parent);
+    File_chooser* fc = new File_chooser(0, 0, 300, 400, "File", parent);
     tab->add_tab(fc);
 
     return COMPOSITOR->run();

@@ -101,8 +101,8 @@ public:
 
 	void delete_texture(unsigned int idx);
 	void texture_size(std::string name, int& w, int& h);
-	unsigned int create_texture_svg(std::string name,std::string filename);
-	unsigned int create_texture_bmp(std::string name, std::string filename);
+	unsigned int create_texture_svg(std::string filename);
+	unsigned int create_texture_bmp(std::string filename);
 	unsigned int create_texture(std::string name, const char* img, int w, int h, TextureMode mode = TEXTURE_RGBA, TextureBorder = TEXBORDER_REPEAT);
 	bool use_texture(std::string name);
 	void use_texture(unsigned int texid);

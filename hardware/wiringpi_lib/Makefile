@@ -1,12 +1,12 @@
-# Utils library
+# WiringPI library
 
 ###########################################################
 # Variables Definitions
 ###########################################################
 
-SOURCES = $(wildcard *.cpp)
-OBJECTS = $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
-STATIC_LIB=$(HW_TDA7419_LIBRARY_NAME)
+SOURCES = $(wildcard *.c)
+OBJECTS = $(patsubst %.c, $(OBJECTS_DIR)/%.o, $(SOURCES))
+STATIC_LIB=$(WIRINGPI_LIBRARY_NAME)
 
 CXXFLAGS+=$(GLOBAL_CXX_FLAGS) -I../include
 LD_FLAGS+=
@@ -18,8 +18,8 @@ LD_FLAGS+=
 all: $(STATIC_LIB)
 	echo "Builing static library " $(STATIC_LIB)
 	
-$(OBJECTS_DIR)/%.o: %.cpp
-	@$(CXX) $< -c $(CXXFLAGS) -o $@ 
+$(OBJECTS_DIR)/%.o: %.c
+	@$(CC) $< -c $(CXXFLAGS) -o $@ 
     
 $(STATIC_LIB): $(OBJECTS)
 	@$(AR) rcs $@ $(OBJECTS)
@@ -27,7 +27,7 @@ $(STATIC_LIB): $(OBJECTS)
 clean:
 	@rm -rf $(OBJECTS) $(STATIC_LIB) $(DEPENDENCY_FILES)
 	
-$(OBJECTS_DIR)/%.d: %.cpp
+$(OBJECTS_DIR)/%.d: %.c
 	@echo "Building dependencies for $<"
-	@$(CXX) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
+	@$(CC) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
 

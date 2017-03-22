@@ -48,9 +48,9 @@ Tab_widget::show_tab(int tabnum){
 void
 Tab_widget::draw()
 {
-	painter().disable_texture();
-	painter().enable_alpha(false);
-	painter().draw_quad(0,0, w(), h(), false, false, 2.5);
+	//painter().disable_texture();
+	//painter().enable_alpha(false);
+	//painter().draw_quad(0,0, w(), h(), false, false, 2.5);
 }
 
 void

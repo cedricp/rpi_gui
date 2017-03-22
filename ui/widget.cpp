@@ -5,8 +5,15 @@
 #include <iostream>
 #include <string.h>
 
+#include <SDL2/SDL.h>
+
 struct WImpl{
 	int		timer_id;
+};
+
+struct UIEvent
+{
+	SDL_Event 	event;
 };
 
 Widget::Widget(int x, int y, int width, int height, const char* name, Widget* parent)
@@ -36,7 +43,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_fixed_width 	= m_fixed_height = -1;
     m_horizontal_margin = m_vertical_margin = 0;
     use_default_font();
-    m_pattern_texture = painter().create_texture_bmp("carbon", "carbon.bmp");
+    m_pattern_texture = painter().create_texture_bmp("tiles/carbon.bmp");
 
     matrix4_identity(m_model_matrix);
 
@@ -66,6 +73,15 @@ void
 Widget::default_callback(Widget* widget, void* data)
 {
 	std::cout << "Default callback method" << std::endl;
+}
+
+void
+Widget::set_background_tiles(std::string filename)
+{
+	if (m_pattern_texture != (unsigned int)-1)
+		painter().delete_texture(m_pattern_texture);
+
+	m_pattern_texture = painter().create_texture_bmp(filename);
 }
 
 void
@@ -655,4 +671,26 @@ Widget::rotate(float x, float y, float z, float angle)
 	matrix4_rotate(pos_matrix, x, y, z, angle * M_PI / 180.);
 	matrix4_mult(m_model_matrix, pos_matrix, m_model_matrix);
 	painter().load_model_matrix(m_model_matrix);
+}
+
+UIEvent*
+Widget::create_event(void* data){
+	UIEvent* event = new UIEvent;
+	SDL_memset(&event->event, 0, sizeof(SDL_Event));
+	Uint32 evt = SDL_RegisterEvents(1);
+	if (evt == (Uint32)-1)
+		return NULL;
+	if (evt != ((Uint32)-1)) {
+	    event->event.type = evt;
+	    event->event.user.code = USER_EVENT;
+	    event->event.user.data1 = this;
+	    event->event.user.data2 = data;
+	}
+	return event;
+}
+
+void
+Widget::push_event(UIEvent* evt){
+	if (evt)
+		SDL_PushEvent(&evt->event);
 }
