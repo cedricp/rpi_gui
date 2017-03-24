@@ -17,6 +17,7 @@ enum Compositor_cursors {
 	CURSOR_CROSS
 };
 
+struct SDL_KeyboardEvent;
 
 class Compositor {
     std::vector<Widget*> m_widgets;
@@ -26,6 +27,7 @@ class Compositor {
     Impl 	*m_impl;
     int 	m_curr_mousex, m_curr_mousey;
     bool handle_mouse_button_event(int, bool);
+    bool handle_key_event(SDL_KeyboardEvent* key_ev, bool push);
     bool handle_mouse_wheel_event(int);
     bool handle_mouse_move_event(int x, int y);
     void resize_widget_to_window(Widget*);

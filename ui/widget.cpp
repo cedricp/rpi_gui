@@ -518,6 +518,33 @@ Widget::mouse_pos(int& x, int& y)
 }
 
 bool
+Widget::internal_key_event(const char* code, bool press)
+{
+	bool taken = false;
+	if (press)
+		taken = key_press_event(code);
+	else
+		taken = key_release_event(code);
+
+	if (!taken && parent()){
+		taken = parent()->internal_key_event(code, press);
+	}
+	return taken;
+}
+
+bool
+Widget::key_press_event(const char* code)
+{
+	return false;
+}
+
+bool
+Widget::key_release_event(const char* code)
+{
+	return false;
+}
+
+bool
 Widget::internal_mouse_button_event(int x, int y, int button, Widget **w, bool press)
 {
 	if (hidden()) return false;

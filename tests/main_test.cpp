@@ -7,6 +7,7 @@
 #include "slider.h"
 #include "tab_widget.h"
 #include "file_chooser.h"
+#include "terminal_widget.h"
 
 int main(int argn, char** args)
 {
@@ -23,7 +24,7 @@ int main(int argn, char** args)
     Button* button2 = new Button(0, 0, 60, 40, "Button #2", layout);
     Button* button3 = new Button(0, 0, 60, 40, "Button #3", layout);
 
-    Navit* navit = new Navit(10,10,500, 400, "navit", parent);
+    Terminal_widget* navit = new Terminal_widget(10,10,500, 400, "navit", parent);
 
     Label* lbl2 = new Label(0, 0, 100, 80, "MP3 & Music content", parent);
     lbl2->bg_color(FColor(0,0,.6,1.));

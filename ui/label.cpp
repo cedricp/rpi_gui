@@ -26,8 +26,6 @@ Label::label(std::string l)
 	dirty(true);
 }
 
-
-
 void
 Label::draw()
 {
@@ -52,7 +50,7 @@ Label::draw()
 		yt = (h() - bound.height()) / 2 + bound.height();
 		break;
 	case ALIGN_TOP:
-		yt = bound.height();
+		yt = h() - bound.height();
 		break;
 	case ALIGN_BOTTOM:
 		yt = h();

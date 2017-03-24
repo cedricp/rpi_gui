@@ -272,6 +272,16 @@ Compositor::remove_widget(Widget* w)
 }
 
 bool
+Compositor::handle_key_event(SDL_KeyboardEvent* key_ev, bool push)
+{
+	Widget* current = m_impl->widget_under_mouse;
+	if (!current)
+		return false;
+
+	return current->internal_key_event(SDL_GetKeyName(key_ev->keysym.sym), push);
+}
+
+bool
 Compositor::handle_mouse_button_event(int button, bool push)
 {
     int reassigned = 0;
@@ -509,9 +519,13 @@ Compositor::run()
 				quit = true;
 				break;
 			case SDL_KEYDOWN:
+				need_update |= handle_key_event(&event.key, true);
 				if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
 					quit = true;
 				}
+				break;
+			case SDL_KEYUP:
+				need_update |= handle_key_event(&event.key, false);
 				break;
 			case SDL_MOUSEBUTTONUP:
 				need_update |= handle_mouse_button_event(event.button.button, false);

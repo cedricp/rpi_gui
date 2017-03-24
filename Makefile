@@ -97,7 +97,7 @@ WIRINGPI_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libwiringpi.a
 # Globals
 GLOBAL_CXX_FLAGS+=-D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS) -I$(SRC_ROOT_DIR)/utils -I$(SRC_ROOT_DIR)/hardware/fm_lib -I$(SRC_ROOT_DIR)/hardware/tda7419_lib
 GLOBAL_LD_FLAGS+=-L$(INSTALL_LIB_DIR) $(LIB_FREETYPE2_LDFLAGS) -ldl -lpthread -lrt
-APPS_LD_FLAGS=-lui -lhw_fm -lhw_tda7419 -lwiringpi -lutils 
+APPS_LD_FLAGS=-lui -lutils -lhw_fm -lhw_tda7419 -lwiringpi -lutil
 
 export
 

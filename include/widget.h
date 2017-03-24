@@ -34,6 +34,7 @@ class Widget{
     void remove_child(Widget* w);
     void internal_draw(bool force = false);
     void get_all_children(std::vector<Widget*>&);
+    bool internal_key_event(const char* code, bool press);
     bool internal_mouse_button_event(int x, int y, int button, Widget **w, bool press);
     bool internal_mouse_motion_event(int x, int y, Widget **w);
     bool internal_mouse_wheel_event(int x, int y, int we, Widget **w);
@@ -57,6 +58,8 @@ protected:
     virtual void parent_resize_event(const IBbox& bbox);
     virtual bool enter_event();
     virtual bool leave_event();
+    virtual bool key_press_event(const char* code);
+    virtual bool key_release_event(const char* code);
     virtual bool mouse_press_event(int button);
     virtual bool mouse_release_event(int button);
     virtual bool mouse_wheel_event(int button);
@@ -141,7 +144,7 @@ public:
     void set_background_tiles(std::string filename);
 
     UIEvent* create_event(void* data = NULL);
-    void push_event(UIEvent* evt);
+    static void push_event(UIEvent* evt);
 
     static Painter& painter();
 
