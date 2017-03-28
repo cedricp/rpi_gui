@@ -798,20 +798,19 @@ Painter::draw_quad_gradient(int x, int y, int width, int height, FColor& color_t
 #ifdef USE_OPENGL
 	if (pattern_texture >= 0)
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glColor3f(1,1,1);
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glBegin(GL_QUADS);
 	glTexCoord2f(x/pattern_size, y);
-	glColor3f(color_top.red(), color_top.green(), color_top.blue());
+	glColor4f(color_top.red(), color_top.green(), color_top.blue(), color_top.alpha());
 	glVertex2f(x, y);
 	glTexCoord2f(x/pattern_size, height/pattern_size);
-	glColor3f(color_bottom.red(), color_bottom.green(), color_bottom.blue());
+	glColor4f(color_bottom.red(), color_bottom.green(), color_bottom.blue(), color_bottom.alpha());
 	glVertex2f(x , height);
 	glTexCoord2f(width/pattern_size, height/pattern_size);
-	glColor3f(color_bottom.red(), color_bottom.green(), color_bottom.blue());
+	glColor4f(color_bottom.red(), color_bottom.green(), color_bottom.blue(), color_bottom.alpha());
 	glVertex2f(width, height);
 	glTexCoord2f(width/pattern_size, y/pattern_size);
-	glColor3f(color_top.red(), color_top.green(), color_top.blue());
+	glColor4f(color_top.red(), color_top.green(), color_top.blue(), color_top.alpha());
 	glVertex2f(width, y);
 	glEnd();
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -823,10 +822,10 @@ Painter::draw_quad_gradient(int x, int y, int width, int height, FColor& color_t
 	glDisable(GL_CULL_FACE);
 
 	GLfloat color_data[] = {
-			color_top.red(), color_top.green(), color_top.blue(), 1,
-			color_bottom.red(), color_bottom.green(), color_bottom.blue(), 1,
-			color_top.red(), color_top.green(), color_top.blue(), 1,
-			color_bottom.red(), color_bottom.green(), color_bottom.blue(), 1,
+			color_top.red(), color_top.green(), color_top.blue(), color_top.alpha(),
+			color_bottom.red(), color_bottom.green(), color_bottom.blue(), color_bottom.alpha(),
+			color_top.red(), color_top.green(), color_top.blue(), color_top.alpha(),
+			color_bottom.red(), color_bottom.green(), color_bottom.blue(), color_bottom.alpha(),
 	};
 
 	GLfloat vtx_data[] = { xx, yy, xx, hh, ww, yy, ww, hh };

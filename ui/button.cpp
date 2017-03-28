@@ -41,6 +41,7 @@ Button::toggle(bool t)
 		m_fgcolor = m_original_fg;
 	}
 	m_toggled = t;
+	dirty(true);
 }
 
 bool
@@ -100,6 +101,8 @@ Button::draw(){
 		if (!m_rounded_rect_data)
 			m_rounded_rect_data = painter().build_rounded_rectangle(areaf, 8, 10);
 		painter().draw_rounded_rectangle(*m_rounded_rect_data);
+	} else if (m_style == STYLE_CARBON) {
+		painter().draw_quad_gradient(0, 0, w(), h(),  m_fgcolor, m_fgcolor, m_pattern_texture, 18);
 	}
 
 	if(m_image_id >= 0){

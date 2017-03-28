@@ -1,20 +1,20 @@
-#include "../include/navit.h"
+#include "../include/navitwidget.h"
+#include "../include/navitwidget.h"
 #include "compositor.h"
 #include "button.h"
 #include "layout.h"
 #include "label.h"
 #include "scroll.h"
 #include "slider.h"
-#include "tab_widget.h"
+#include "multi_panel.h"
 #include "file_chooser.h"
-#include "terminal_widget.h"
 
 int main(int argn, char** args)
 {
     Widget* parent = COMPOSITOR->create_new_window();
     parent->backgroung_gradient_enable(true);
 
-    Tab_widget* tab = new Tab_widget(100, 200, 300, 300, "tab", parent);
+    Multi_panel* tab = new Multi_panel(0, 0, parent->w(), parent->h(), "multipane", parent);
     Scroll* scroll = new Scroll(0, 0, 300, 500, "Radio tab", parent);
 
     Layout* layout = new Layout(0, 0, 350, 500, "Child", scroll, LAYOUT_VERTICAL);
@@ -24,7 +24,7 @@ int main(int argn, char** args)
     Button* button2 = new Button(0, 0, 60, 40, "Button #2", layout);
     Button* button3 = new Button(0, 0, 60, 40, "Button #3", layout);
 
-    Terminal_widget* navit = new Terminal_widget(10,10,500, 400, "navit", parent);
+    Navit_widget* navit = new Navit_widget(10,10,500, 400, "navit", parent);
 
     Label* lbl2 = new Label(0, 0, 100, 80, "MP3 & Music content", parent);
     lbl2->bg_color(FColor(0,0,.6,1.));
@@ -37,6 +37,7 @@ int main(int argn, char** args)
 
     tab->add_tab(scroll);
     tab->add_tab(lbl2);
+    tab->add_tab(navit);
 
     File_chooser* fc = new File_chooser(0, 0, 300, 400, "File", parent);
     tab->add_tab(fc);

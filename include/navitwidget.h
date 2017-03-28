@@ -5,15 +5,15 @@
 
 struct impl;
 
-class Navit : public Widget
+class Navit_widget : public Widget
 {
 	impl* m_impl;
 protected:
 	virtual void draw();
 	virtual void resize(int x, int y, int w, int h);
 public:
-	Navit(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
-	~Navit();
+	Navit_widget(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
+	~Navit_widget();
 
 	virtual bool mouse_release_event(int button);
 	virtual bool mouse_press_event(int button);

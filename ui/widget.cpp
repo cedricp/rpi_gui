@@ -23,6 +23,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_bgcolor 	= FColor(0., 0., 0., 1.);
     m_fgcolor 	= FColor(1., 1., 1., 1.);
     m_bg_gradient_enabled = false;
+    m_tiles_enabled		  = false;
     m_is_root	= false;
     
     m_bg_gradient_top = FColor(0.2f,0.2f,.2f, 1.f);
@@ -165,8 +166,10 @@ void Widget::internal_draw(bool force)
     if (!m_transparent)
     	painter().clear_color_buffer(m_bgcolor);
 
-    if (m_bg_gradient_enabled)
-    	painter().draw_quad_gradient(0, 0, w(), h(), m_bg_gradient_top, m_bg_gradient_bottom, m_pattern_texture, 18);
+    if (m_bg_gradient_enabled || m_tiles_enabled)
+    	painter().draw_quad_gradient(0, 0, w(), h(), m_bg_gradient_enabled ? m_bg_gradient_top : m_bgcolor,
+    								 m_bg_gradient_enabled ? m_bg_gradient_bottom : m_bgcolor,
+    								 m_tiles_enabled ? m_pattern_texture : -1, 18);
 
     painter().color(m_fgcolor);
     // Call widget custom draw method

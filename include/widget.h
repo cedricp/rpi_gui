@@ -49,7 +49,7 @@ protected:
     FColor 		m_fgcolor;
     FColor		m_bg_gradient_bottom, m_bg_gradient_top;
     int 		m_font_id;
-    bool		m_bg_gradient_enabled;
+    bool		m_bg_gradient_enabled, m_tiles_enabled;
     Matrix		m_projection_matrix, m_model_matrix;
     void		do_callback(Widget* w, void* arg);
     void		do_callback();
@@ -93,6 +93,10 @@ public:
 
     void backgroung_gradient_enable(bool e){
     	m_bg_gradient_enabled = e;
+    }
+
+    void tiles_enabled(bool e){
+    	m_tiles_enabled = e;
     }
 
     int w();

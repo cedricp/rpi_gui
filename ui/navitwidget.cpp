@@ -1,4 +1,3 @@
-#include "navit.h"
 #include "compositor.h"
 
 #include <SDL2/SDL.h>
@@ -8,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <navitwidget.h>
 #include <signal.h>
 
 static char * nicfifo = "/tmp/navit.command.fifo";
@@ -133,7 +133,7 @@ no_data:
 	return 0;
 }
 
-Navit::Navit(int x, int y, int width, int height, const char* name, Widget* parent) : Widget(x, y, width, height, name, parent)
+Navit_widget::Navit_widget(int x, int y, int width, int height, const char* name, Widget* parent) : Widget(x, y, width, height, name, parent)
 {
 	m_impl = new impl(this);
 
@@ -141,7 +141,7 @@ Navit::Navit(int x, int y, int width, int height, const char* name, Widget* pare
 	resize(x, y, width, height);
 }
 
-Navit::~Navit()
+Navit_widget::~Navit_widget()
 {
 	int retval;
 	m_impl->kill_thread = 1;
@@ -149,7 +149,7 @@ Navit::~Navit()
 }
 
 void
-Navit::resize(int x, int y, int w, int h)
+Navit_widget::resize(int x, int y, int w, int h)
 {
 	char buffer[40];
 	sprintf(buffer, "resize=%ix%i", w, h);
@@ -158,7 +158,7 @@ Navit::resize(int x, int y, int w, int h)
 }
 
 bool
-Navit::custom_event(void* data)
+Navit_widget::custom_event(void* data)
 {
 	m_impl->in_use = true;
 	if (m_impl->w != w() || m_impl->h != h()){
@@ -172,7 +172,7 @@ Navit::custom_event(void* data)
 }
 
 bool
-Navit::mouse_release_event(int button)
+Navit_widget::mouse_release_event(int button)
 {
 	char buffer[40];
 	int x, y;
@@ -183,7 +183,7 @@ Navit::mouse_release_event(int button)
 }
 
 bool
-Navit::mouse_press_event(int button)
+Navit_widget::mouse_press_event(int button)
 {
 	char buffer[40];
 	int x, y;
@@ -195,7 +195,7 @@ Navit::mouse_press_event(int button)
 }
 
 bool
-Navit::mouse_motion_event(int x, int y)
+Navit_widget::mouse_motion_event(int x, int y)
 {
 	char buffer[40];
 	sprintf(buffer, "move=%i-%i", x, y);
@@ -204,13 +204,13 @@ Navit::mouse_motion_event(int x, int y)
 }
 
 bool
-Navit::leave_event()
+Navit_widget::leave_event()
 {
 	return false;
 }
 
 void
-Navit::draw(){
+Navit_widget::draw(){
 	if (m_impl->texid != (unsigned int)-1)
 		painter().delete_texture(m_impl->texid);
 

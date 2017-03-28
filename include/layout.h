@@ -12,11 +12,11 @@ class Layout : public Widget
 {
 	Layout_style m_style;
 	bool 		 m_autoresize;
+protected:
+	virtual void widget_added_event(Widget* widget);
 public:
 	Layout(int x, int y, int w, int h, const char* name = "", Widget* parent = NULL, Layout_style style = LAYOUT_VERTICAL);
 	~Layout();
-
-	virtual void widget_added_event(Widget* widget);
 
 	void set_style(Layout_style style);
 	void compute_layout();

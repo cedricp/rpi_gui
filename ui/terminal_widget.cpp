@@ -63,17 +63,8 @@ Terminal_widget::custom_event(void* data)
 	for (y = 0; y < m_impl->vt100_headless->term->height; ++y)
 	{
 		std::string l = lines[y];
-		for(;;){
-			txt += l.substr(0, 80);
-			txt += "\n";
-			std::cout << txt ;
-			if (l.size() >= 80){
-				l = l.substr(80, std::string::npos);
-				std::cout << txt << l.size() << std::endl;
-			} else {
-				break;
-			}
-		}
+		txt += l.substr(0, 80);
+		txt += "\n";
 	}
 	m_text->label(txt);
 	return true;
@@ -82,12 +73,16 @@ Terminal_widget::custom_event(void* data)
 bool
 Terminal_widget::key_press_event(const char* key)
 {
-	char buf[2];buf[1] = 0;
+	char buf[32];buf[1] = 0;
+	std::cout << key << std::endl;
 	if (strcmp(key, "Return") == 0){
 		write(m_impl->vt100_headless->master, "\n", 1);
 	} else if(strcmp(key, "Backspace") == 0){
 		write(m_impl->vt100_headless->master, "\b", 1);
 	} else if(strcmp(key, "Space") == 0){
+		write(m_impl->vt100_headless->master, " ", 1);
+	} else if(strcmp(key, "Left") == 0){
+		sprintf(buf, "\033[D");
 		write(m_impl->vt100_headless->master, " ", 1);
 	} else {
 		buf[0] = key[0]+32;

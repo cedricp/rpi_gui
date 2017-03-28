@@ -165,7 +165,7 @@ void vt100_headless_fork(struct vt100_headless *that,
 
     set_non_canonical(that, 0);
     winsize.ws_row = 24;
-    winsize.ws_col = 50;
+    winsize.ws_col = 80;
     child = forkpty(&that->master, NULL, NULL, NULL);
     if (child == CHILD)
     {

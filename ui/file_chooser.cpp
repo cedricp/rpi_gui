@@ -51,6 +51,7 @@ File_chooser::File_chooser(int x, int y, int width, int height, const char* name
 	m_header_layout->compute_layout();
 
 	backgroung_gradient_enable(true);
+	tiles_enabled(true);
 	m_main_layout->transparent(true);
 	m_scroll_view->transparent(true);
 	m_files_layout->transparent(true);
