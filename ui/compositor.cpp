@@ -442,6 +442,15 @@ Compositor::create_new_window()
 }
 
 void
+Compositor::set_widget_as_window(Widget* wid)
+{
+    int w, h;
+    SDL_GetWindowSize(m_impl->window, &w, &h);
+    wid->resize(0, 0, w, h);
+    wid->root(true);
+}
+
+void
 Compositor::resize_widget_to_window(Widget* w)
 {
     int x, y;

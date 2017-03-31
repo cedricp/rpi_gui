@@ -59,6 +59,7 @@ public:
     void 	finish();
     void	cursor(Compositor_cursors c);
     void	advert_widget_deleted(Widget* w);
+    void	set_widget_as_window(Widget* wid);
 };
 
 #define COMPOSITOR Compositor::get_singleton()

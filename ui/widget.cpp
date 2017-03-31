@@ -245,14 +245,12 @@ Widget::close()
 void
 Widget::parent(Widget* w)
 {
-    Compositor * comp = Compositor::get_singleton();
-
     if (m_parent != NULL){
          m_parent->remove_child(this);
          w->add_child(this);
     } else {
-        if (comp->widget_exists(this)){
-            comp->remove_widget(this);
+        if (COMPOSITOR->widget_exists(this)){
+        	COMPOSITOR->remove_widget(this);
         }
         w->add_child(this);
     }

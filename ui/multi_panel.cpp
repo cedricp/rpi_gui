@@ -17,14 +17,10 @@ Multi_panel::add_tab(Widget* wid)
 	if (wid->parent() != this)
 		wid->parent(this);
 
-	int buttons_layout_size_x = m_buttons_layout->w() + 1;
-	wid->resize(buttons_layout_size_x, 0, w() - buttons_layout_size_x, h());
 	m_widgets.push_back(wid);
 
 	Button* button = new Button(0, 0, 0, 0, wid->name().c_str(), m_buttons_layout);
 	button->style(Button::STYLE_CARBON);
-	button->fixed_width(buttons_layout_size_x - 2);
-	m_buttons_layout->compute_layout();
 	m_buttons.push_back(button);
 
 	button->id(m_widgets.size()-1);
@@ -39,6 +35,8 @@ Multi_panel::add_tab(Widget* wid)
 	} else {
 		wid->hide();
 	}
+
+	compute_layout();
 
 	return button;
 }
@@ -64,4 +62,28 @@ void
 Multi_panel::button_callback(int butnum)
 {
 	show_tab(butnum);
+}
+
+void
+Multi_panel::compute_layout()
+{
+	int buttons_layout_size_x = m_buttons_layout->w() + 1;
+
+	for (int i = 0; i < m_buttons.size(); ++i){
+		m_buttons[i]->fixed_width(buttons_layout_size_x - 2);
+	}
+
+	for (int i = 0; i < m_widgets.size(); ++i){
+		m_widgets[i]->resize(buttons_layout_size_x, 0, w() - buttons_layout_size_x, h());
+	}
+	m_buttons_layout->resize(0,0, w() / 6, h());
+	m_buttons_layout->compute_layout();
+}
+
+void
+Multi_panel::resize(int X, int Y, int W, int H)
+{
+	Widget::resize(X, Y, W, H);
+	compute_layout();
+	dirty(true);
 }
