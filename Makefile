@@ -20,6 +20,7 @@ SDL_ROOT_X86=/sources/RTL/RADIO/INSTALL
 # If you're compiling from the PI
 SDL_ROOT_PI=/home/cedric/DEV/ROOT_INSTALL
 
+PYTHON_VERSION=2.6
 ###########################################################################################
 
 ifndef BUILD
@@ -27,6 +28,7 @@ $(error Variable BUILD not specified use BUILD=X86 or BUILD=CROSSPI)
 endif
 
 SRC_ROOT_DIR=$(shell pwd)
+PYTHON_INCLUDE=/usr/include/python$(PYTHON_VERSION)
 
 ifeq ($(BUILD),CROSSPI)
 PLATFORM=RPI_CROSS
@@ -95,14 +97,14 @@ HW_TDA7419_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libhw_tda7419.a
 WIRINGPI_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libwiringpi.a
 
 # Globals
-GLOBAL_CXX_FLAGS+=-D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS) -I$(SRC_ROOT_DIR)/utils -I$(SRC_ROOT_DIR)/hardware/fm_lib -I$(SRC_ROOT_DIR)/hardware/tda7419_lib
+GLOBAL_CXX_FLAGS+=-fPIC -I$(PYTHON_INCLUDE) -D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS) -I$(SRC_ROOT_DIR)/utils -I$(SRC_ROOT_DIR)/hardware/fm_lib -I$(SRC_ROOT_DIR)/hardware/tda7419_lib
 GLOBAL_LD_FLAGS+=-L$(INSTALL_LIB_DIR) $(LIB_FREETYPE2_LDFLAGS) -ldl -lpthread -lrt
 APPS_LD_FLAGS=-lui -lutils -lhw_fm -lhw_tda7419 -lwiringpi -lutil
 
 export
 
-.PHONY: make_paths utils ui tests clean hardware
-all: make_paths utils hardware ui tests 
+.PHONY: make_paths utils ui tests clean hardware python
+all: make_paths utils hardware ui tests python
 
 hardware:
 	$(MAKE) -C hardware
@@ -115,6 +117,9 @@ utils: make_paths
 
 tests: make_paths utils ui
 	$(MAKE) -C tests
+
+python: utils hardware ui
+	$(MAKE) -C python
 
 clean:
 	$(MAKE) -C ui clean

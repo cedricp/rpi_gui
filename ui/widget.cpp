@@ -25,6 +25,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_bg_gradient_enabled = false;
     m_tiles_enabled		  = false;
     m_is_root	= false;
+    m_user_data = NULL;
     
     m_bg_gradient_top = FColor(0.2f,0.2f,.2f, 1.f);
     m_bg_gradient_bottom = FColor(.5f,.5f,.5f, 1.0f);

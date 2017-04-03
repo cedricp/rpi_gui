@@ -18,7 +18,7 @@ public:
 	Layout(int x, int y, int w, int h, const char* name = "", Widget* parent = NULL, Layout_style style = LAYOUT_VERTICAL);
 	~Layout();
 
-	void set_style(Layout_style style);
+	void style(Layout_style style);
 	void compute_layout();
 	void parent_resize_event(const IBbox& bbox);
 	void autoresize(bool a){m_autoresize = a;}

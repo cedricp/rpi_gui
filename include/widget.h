@@ -29,6 +29,7 @@ class Widget{
     WImpl*  	m_impl;
     Painter* 	m_painter;
     std::vector<float*> m_model_matrix_stack;
+    void*		m_user_data;
     
     void add_child(Widget* w);
     void remove_child(Widget* w);
@@ -73,9 +74,13 @@ protected:
 
     virtual void draw();
     virtual void post_draw();
+
 public:
     Widget(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
     virtual ~Widget();
+
+    void user_data(void* ud){m_user_data = ud;}
+    void* user_data(){return m_user_data;}
 
     Widget* parent(){
         return m_parent;

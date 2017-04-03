@@ -12,7 +12,7 @@ Layout::~Layout()
 }
 
 void
-Layout::set_style(Layout_style style)
+Layout::style(Layout_style style)
 {
 	m_style = style;
 	compute_layout();

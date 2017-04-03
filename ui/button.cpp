@@ -147,7 +147,7 @@ Button::style(BUTTON_STYLE style)
 	m_rounded_rect_data = NULL;
 
 	if (m_style == STYLE_CARBON){
-		m_color_push = FColor(.5, .5, .5, 1);
+		m_color_push = FColor(.8, .8, .8, 1);
 		m_color_hover = FColor(.5, .5, .5, .9);
 		m_original_fg = FColor(.5, .5, .5, .6);
 		m_fgcolor = m_original_fg;

@@ -583,7 +583,6 @@ Compositor::run()
     	delete (*it);
     }
 
-    finish();
     return 0;
 }
 

@@ -67,11 +67,11 @@ public:
 class Painter
 {
 	PImpl *m_impl;
+	void init_gles2();
 public:
 	Painter();
 	~Painter();
 
-	void init_gles2();
 
 	void viewport(int x,int y,int width, int height);
 	void create_ortho_matrix(float left, float right, float bottom, float top,
