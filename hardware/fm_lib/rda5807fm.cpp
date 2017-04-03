@@ -399,7 +399,7 @@ void RDA5807_fm::sendRegister(char reg) {
 	close(fd);
 }
 
-const RDA5807_fm::RadioState& RDA5807_fm::getRadioState()
+const RadioState& RDA5807_fm::getRadioState()
 {
 	return m_radio_state;
 }

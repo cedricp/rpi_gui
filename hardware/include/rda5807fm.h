@@ -1,37 +1,38 @@
 #ifndef RDA5807_H
 #define RDA5807_H
 
+struct RadioState {
+	bool isEnabled;
+	bool isMuted;
+	bool isSoftMute;
+	bool isMonoForced;
+	bool isBassBoost;
+	char volume;
+	char sensitivity;
+
+	bool isTuning;
+	bool tuningComplete;
+	bool tuningError;
+	bool isTunedToChannel;
+	bool isStereo;
+	float frequency;
+	char signalStrength;
+
+	bool hasRdsData;
+	bool hasRdsBlockE;
+	char rdsBlockErrors;
+	unsigned short rdsBlockA;
+	unsigned short rdsBlockB;
+	unsigned short rdsBlockC;
+	unsigned short rdsBlockD;
+	unsigned short rdsBlockE;
+
+	bool hasStationName;
+	char stationName[9];
+};
+
 class RDA5807_fm {
 	public:
-		struct RadioState {
-			bool isEnabled;
-			bool isMuted;
-			bool isSoftMute;
-			bool isMonoForced;
-			bool isBassBoost;
-			char volume;
-			char sensitivity;
-
-			bool isTuning;
-			bool tuningComplete;
-			bool tuningError;
-			bool isTunedToChannel;
-			bool isStereo;
-			float frequency;
-			char signalStrength;
-
-			bool hasRdsData;
-			bool hasRdsBlockE;
-			char rdsBlockErrors;
-			unsigned short rdsBlockA;
-			unsigned short rdsBlockB;
-			unsigned short rdsBlockC;
-			unsigned short rdsBlockD;
-			unsigned short rdsBlockE;
-
-			bool hasStationName;
-			char stationName[9];
-		};
 		RDA5807_fm();
 		bool init();
 		void setVolume(char volume);

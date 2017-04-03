@@ -5,10 +5,6 @@
 // macro to delegate the ownership of a class to C++
 %define CHANGE_OWNERSHIP(name)
 %pythonappend name##::##name %{
-if len(args) == 6:          
-    # retain reference to label
-    self.my_label = args[5]
-
 self.this.disown()
 %}
 %enddef
@@ -25,6 +21,10 @@ self.this.disown()
 %include "button.swig"
 %include "painter.swig"
 %include "layout.swig"
+%include "scroll.swig"
+%include "slider.swig"
+%include "tab_widget.swig"
+%include "multi_panel.swig"
 
 %pythoncode %{
 def get_compositor():
