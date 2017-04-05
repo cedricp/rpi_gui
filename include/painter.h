@@ -72,7 +72,6 @@ public:
 	Painter();
 	~Painter();
 
-
 	void viewport(int x,int y,int width, int height);
 	void create_ortho_matrix(float left, float right, float bottom, float top,
 			 	 	 	 	 float near_val, float far_val, Matrix outmatrix);

@@ -9,6 +9,8 @@ self.this.disown()
 %}
 %enddef
 
+%include stl.i
+
 %include "../include/color.h"
 %template(FColor) Color<float>;
 
@@ -25,6 +27,8 @@ self.this.disown()
 %include "slider.swig"
 %include "tab_widget.swig"
 %include "multi_panel.swig"
+%include "label.swig"
+%include "file_chooser.swig"
 
 %pythoncode %{
 def get_compositor():

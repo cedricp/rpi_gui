@@ -15,7 +15,7 @@ class Layout : public Widget
 protected:
 	virtual void widget_added_event(Widget* widget);
 public:
-	Layout(int x, int y, int w, int h, const char* name = "", Widget* parent = NULL, Layout_style style = LAYOUT_VERTICAL);
+	Layout(int x=0, int y=0, int w=0, int h=0, const char* name = "", Widget* parent = NULL, Layout_style style = LAYOUT_VERTICAL);
 	~Layout();
 
 	void style(Layout_style style);

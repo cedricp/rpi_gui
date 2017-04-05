@@ -1011,10 +1011,16 @@ Painter::build_text(int font_id, std::string text, int start_x,int start_y, Text
 {
 	if (font_id >= m_impl->fonts.size())
 		return false;
+
 	data.data->finfo = m_impl->fonts[font_id];
 	data.text = text;
-	if (data.data->text_vector)
+	if (data.data->text_vector){
 		vector_delete(data.data->text_vector);
+		data.data->text_vector = NULL;
+	}
+	if (text.empty())
+		return true;
+
 	data.data->text_vector = vector_new(sizeof(GLfloat));
 	generate_text(data);
 	return true;

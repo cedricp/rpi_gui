@@ -11,7 +11,7 @@ class Tab_container : public Widget
 {
 	std::vector<Button*> m_buttons;
 public:
-	Tab_container(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL) : Widget(x, y, width, height, name, parent){
+	Tab_container(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL) : Widget(x, y, width, height, name, parent){
 
 	}
 

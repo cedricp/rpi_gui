@@ -28,7 +28,7 @@ protected:
 	}
 public:
 	~Label();
-	Label(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
+	Label(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL);
 	void alignment(halign h, valign v);
 	void label(std::string);
 };

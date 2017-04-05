@@ -1,0 +1,22 @@
+(c) 2017 Cedric PAILLE
+
+**
+** Building instruction
+** --------------------
+
+----------------
+1. Dependencies:
+----------------
+
+	* SDL2 -> https://github.com/cedricp/SDL2-PI (which is modifed to support touchscreen and some EGL stuffs) 
+	* PYTHON (2.6 or 2.7)
+	
+------------
+2. Building:
+------------
+	* X86 :
+		> make BUILD=X86 SDL_ROOT_X86=[Root directory of SDL2] PYTHON_EXE=[Root directory of Python (/usr/bin/python)]
+
+	* RPI :
+		> make BUILD=PI SDL_ROOT_PI=[Root directory of SDL2] PYTHON_EXE=[Root directory of Python (/usr/bin/python)]
+

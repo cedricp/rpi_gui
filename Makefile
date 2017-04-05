@@ -10,18 +10,21 @@
 # The path to your cross gcc compiler directory
 CROSSGCC_ROOT=/sources/RPI/RPI_DEV/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin
 
-# Path to your raspbian distro directory
-
 # If you're cross compiling, you likely want to change the 2 lines above
-SYSROOT=/sources/RPI/RPI_DEV/deb_root
-SDL_ROOT_CROSSPI=/sources/RPI/RPI_DEV/INSTALL
-# If you're builing for a X86 on a X86 :)
-SDL_ROOT_X86=/sources/RTL/RADIO/INSTALL
-# If you're compiling from the PI
-SDL_ROOT_PI=/home/cedric/DEV/ROOT_INSTALL
+SYSROOT?=/sources/RPI/RPI_DEV/deb_root
+SDL_ROOT_CROSSPI?=/sources/RPI/RPI_DEV/INSTALL
 
-PYTHON_VERSION=2.6
+# If you're builing for a X86 on a X86 :)
+SDL_ROOT_X86?=/sources/RTL/RADIO/INSTALL
+
+# If you're compiling from the PI
+SDL_ROOT_PI?=/home/cedric/DEV/ROOT_INSTALL
+
+PYTHON_EXE?=/usr/bin/python
+
 ###########################################################################################
+
+PYTHON_VERSION=${shell ${PYTHON_EXE} --version 2> /dev/stdout | cut -c 8-10}
 
 ifndef BUILD
 $(error Variable BUILD not specified use BUILD=X86 or BUILD=CROSSPI)
@@ -125,8 +128,9 @@ clean:
 	$(MAKE) -C ui clean
 	$(MAKE) -C utils clean
 	$(MAKE) -C tests clean
+	$(MAKE) -C python clean
 
-distclean:
+distclean: clean
 	rm -rf $(INSTALL_DIR)
 
 make_paths:

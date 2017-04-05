@@ -28,7 +28,7 @@ protected:
 	void draw();
 	void resize(int x, int y, int w, int h);
 public:
-	File_chooser(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
+	File_chooser(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL);
 	void set_path(std::string path);
 	std::string get_current_path(){return m_path;}
 	std::string get_current_file(){return m_file;}

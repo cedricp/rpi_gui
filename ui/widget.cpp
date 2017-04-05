@@ -16,6 +16,12 @@ struct UIEvent
 	SDL_Event 	event;
 };
 
+/** @brief Widget constructor
+ *  @param x X position of the widget
+ *  @param y Y position of the widget
+ *  @param width Width of the widget
+ *  @param name the name of the widget
+ */
 Widget::Widget(int x, int y, int width, int height, const char* name, Widget* parent)
 {
     m_impl      = new WImpl;
@@ -44,7 +50,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_transparent	= false;
     m_fixed_width 	= m_fixed_height = -1;
     m_horizontal_margin = m_vertical_margin = 0;
-    use_default_font();
+    use_default_fonts();
     m_pattern_texture = painter().create_texture_bmp("tiles/carbon.bmp");
 
     matrix4_identity(m_model_matrix);
@@ -65,18 +71,29 @@ Widget::~Widget()
     	delete(*it);
 }
 
+/** @brief returns the global painter class
+ *  @return Global painter class
+ */
 Painter&
 Widget::painter()
 {
 	return COMPOSITOR->painter();
 }
 
+/** @brief Default callback method
+ *  @param widget the Widget pointer of the caller
+ *  @param data user data
+ */
 void
 Widget::default_callback(Widget* widget, void* data)
 {
 	std::cout << "Default callback method" << std::endl;
 }
 
+
+/** @brief Set the background wall-paper with a tiled pattern
+ *  @param filename file name of the tile
+ */
 void
 Widget::set_background_tiles(std::string filename)
 {
@@ -86,12 +103,17 @@ Widget::set_background_tiles(std::string filename)
 	m_pattern_texture = painter().create_texture_bmp(filename);
 }
 
+/** @brief execute the registered callback
+ *  @param w the widget pointer associated with this callback
+ */
 void
 Widget::do_callback(Widget* w, void* arg)
 {
 	m_callback(w, arg);
 }
 
+/** @brief execute the registered callback
+ */
 void
 Widget::do_callback()
 {
@@ -112,6 +134,8 @@ Widget::callback(WCallback* cb, void* user_data)
 	m_callbackdata = user_data;
 }
 
+/** @brief draw method called by the compositor to decorate the widget
+ */
 void Widget::draw()
 {
 
@@ -122,12 +146,20 @@ void Widget::draw()
 #endif
 }
 
+/** @brief post draw (at the very end) method called by the compositor to decorate the widget
+ */
 void
 Widget::post_draw()
 {
 
 }
 
+/** @brief Initialize the widget's viewport
+ *  @param x the position in x
+ *  @param y the position in y
+ *  @param width the width of the widget
+ *  @param height the height of the widget
+ */
 void Widget::init_viewport(int x, int y, int width, int height)
 {
     painter().viewport( x, y, width, height );
@@ -178,6 +210,13 @@ void Widget::internal_draw(bool force)
     painter().scissor_end();
 
     m_dirty = false;
+}
+
+void
+Widget::gradient(const FColor&top, const FColor& bottom)
+{
+	m_bg_gradient_top = top;
+	m_bg_gradient_bottom = bottom;
 }
 
 void
@@ -256,6 +295,20 @@ Widget::parent(Widget* w)
         w->add_child(this);
     }
     m_parent = w;
+}
+
+void
+Widget::fixed_width(int w)
+{
+	m_fixed_width = w;
+	resize(m_fixed_width, h());
+}
+
+void
+Widget::fixed_height(int h)
+{
+	m_fixed_height = h;
+	resize(w(), m_fixed_height);
 }
 
 bool
@@ -462,6 +515,12 @@ Widget::screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy)
     wy = sy - y;
 }
 
+void
+Widget::add_timer(int ms)
+{
+	COMPOSITOR->add_timer_event(ms, this);
+}
+
 Widget*
 Widget::child_widget_in(int x, int y){
     Widget* ret = NULL;
@@ -641,21 +700,28 @@ Widget::y(int y)
 }
 
 void
-Widget::use_font(std::string font_name)
+Widget::use_fonts(std::string font_name)
 {
 	m_font_id = painter().font_by_name(font_name);
 }
 
 void
-Widget::use_default_font()
+Widget::use_fonts_id(int font_id)
+{
+	m_font_id = font_id;
+}
+
+void
+Widget::use_default_fonts()
 {
 	m_font_id = painter().default_font_idx();
 }
 
-void
-Widget::load_font(std::string font_filename, int size, int atlas_size)
+int
+Widget::load_fonts(std::string font_filename, int size, int atlas_size)
 {
 	m_font_id  = painter().load_fonts(font_filename, size, atlas_size);
+	return m_font_id;
 }
 
 void

@@ -10,7 +10,7 @@ class Scroll : public Widget
 protected:
 	virtual void draw();
 public:
-	Scroll(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
+	Scroll(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL);
 	virtual bool accept_drag(int x, int y);
 	virtual bool drag_event(int rel_x, int rel_y);
 	virtual void widget_added_event(Widget* widget);

@@ -30,7 +30,7 @@ private:
 protected:
 	virtual void draw();
 public:
-	Button(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
+	Button(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL);
 	~Button();
 
 	virtual bool mouse_press_event(int button);

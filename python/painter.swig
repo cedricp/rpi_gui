@@ -43,12 +43,41 @@ PyObject* create_matrix(Matrix m){
 %ignore Painter::load_identity(Matrix matrix);
 %ignore Painter::load_projection_matrix(Matrix matrix);
 %ignore Painter::load_model_matrix(Matrix matrix);
+%ignore Painter::build_text(int font_id, std::string text, int start_x,int start_y, Text_data& data);
+%ignore Painter::load_svg_image(std::string filename, int &w, int &h);
+%ignore Painter::locate_resource(std::string name, std::string &path);
+%ignore Painter::texture_size(std::string name, int& w, int& h);
 
 %include typemaps.i
 
 %include "../include/painter.h"
 
 %extend Painter {
+	PyObject* locate_resource(const char* filename){
+		std::string path;
+		self->locate_resource(filename, path);
+		return PyString_FromString(path.c_str());
+	}
+
+	PyObject*
+	load_svg_image(const char* filename){
+		int x, y;
+		self->load_svg_image(filename, x, y);
+		PyObject* ret = PyTuple_New(2);
+		PyObject* pyx = PyInt_FromLong(x);
+		PyObject* pyy = PyInt_FromLong(y);
+		PyTuple_SetItem(ret, 0, pyx);
+		PyTuple_SetItem(ret, 1, pyy);
+		return ret;
+	}
+
+	PyObject* 
+	build_text(int font_id, const char* text, int start_x,int start_y){
+		Text_data* tdata = new Text_data;
+		self->build_text(font_id, std::string(text), start_x, start_y, *tdata);
+		return SWIG_NewPointerObj((void*)tdata, SWIGTYPE_p_Text_data, 1);
+	}
+	
 	PyObject*
 	create_ortho_matrix(float left, float right, float bottom, float top, float near_val, float far_val){
 		Matrix mat;

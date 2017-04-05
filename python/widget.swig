@@ -62,61 +62,76 @@ CHANGE_OWNERSHIP(Widget)
     }
   %}
   
-  %include "../include/widget.h"
-  
-  %extend Widget {
-	  void
-	    callback(PyObject *PyFunc, PyObject *PyWidget, PyObject *PyData = 0)
-	    {
-	      callbackstruct *cb = (callbackstruct*)self->user_data();
-	
-	      if (cb) {
-			cb->func = PyFunc;
-			cb->widget = PyWidget;
-			if (PyData) {
-			  cb->data = PyData;
-			}
-				cb->widget = PyWidget;
-		    }
-	      else
-			cb = new callbackstruct( PyFunc, PyData, PyWidget );
-	
-	      // Add a reference to new callback
-	      Py_INCREF(PyFunc);			
-	      Py_XINCREF(PyData);
-	      Py_XINCREF(PyWidget);
-	
-	      self->callback(PythonCallBack, (void *)cb);
-	    }
- 
-	   void
-	    user_data(PyObject *PyData)
-	    {
-	      // Add a reference to new callback
-	      Py_XINCREF(PyData);
-		
-	      callbackstruct *cb = (callbackstruct*)self->user_data();
-	      if (cb == NULL) {
-			cb = new callbackstruct(0, PyData, (PyObject*)0);
-			self->user_data((void *)cb);
-	      }
-	      else {
-			cb->data = PyData;
-	      }
-	    }
+%include "../include/widget.h"
 
-	  PyObject* user_data() {
-	    PyObject *obj = 0;
-	    callbackstruct *cb = (callbackstruct*)self->user_data();
-	    if (cb) {
-	      if (cb->data) {
-			obj = (PyObject*)cb->data;
-	      }
+%ignore Widget::mouse_pos(int&x, int&y);
+
+%extend Widget {
+	PyObject*
+	mouse_pos()
+	{
+		int x, y;
+		self->mouse_pos(x,y);
+		PyObject* ret = PyTuple_New(2);
+		PyObject* pyx = PyInt_FromLong(x);
+		PyObject* pyy = PyInt_FromLong(y);
+		PyTuple_SetItem(ret, 0, pyx);
+		PyTuple_SetItem(ret, 1, pyy);
+		return ret;
+	}
+
+  	void
+    callback(PyObject *PyFunc, PyObject *PyWidget, PyObject *PyData = 0)
+    {
+      callbackstruct *cb = (callbackstruct*)self->user_data();
+
+      if (cb) {
+		cb->func = PyFunc;
+		cb->widget = PyWidget;
+		if (PyData) {
+		  cb->data = PyData;
+		}
+			cb->widget = PyWidget;
 	    }
+      else
+		cb = new callbackstruct( PyFunc, PyData, PyWidget );
+
+      // Add a reference to new callback
+      Py_INCREF(PyFunc);			
+      Py_XINCREF(PyData);
+      Py_XINCREF(PyWidget);
+
+      self->callback(PythonCallBack, (void *)cb);
+    }
+ 
+   	void
+    user_data(PyObject *PyData)
+    {
+      // Add a reference to new callback
+      Py_XINCREF(PyData);
 	
-	    Py_XINCREF(obj);
-	    return obj;
-	  }
+      callbackstruct *cb = (callbackstruct*)self->user_data();
+      if (cb == NULL) {
+		cb = new callbackstruct(0, PyData, (PyObject*)0);
+		self->user_data((void *)cb);
+      }
+      else {
+		cb->data = PyData;
+      }
+    }
+
+  	PyObject* user_data() {
+    PyObject *obj = 0;
+    callbackstruct *cb = (callbackstruct*)self->user_data();
+    if (cb) {
+      if (cb->data) {
+		obj = (PyObject*)cb->data;
+      }
+    }
+
+    Py_XINCREF(obj);
+    return obj;
+  }
 }
 
 

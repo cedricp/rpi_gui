@@ -20,12 +20,15 @@ DEPENDENCY_FILES=$(addprefix $(OBJECTS_DIR)/,$(DEP_DOT_D))
 # Rules
 ###########################################################
 
+.PHONY=clean
 all: $(STATIC_LIB)
 	echo "Builing static library " $(STATIC_LIB)
+
+clean:
+	@rm -rf $(OBJECTS) $(STATIC_LIB)
 	
 CXXFLAGS+=-I$(SRC_ROOT_DIR)/utils -I$(SRC_ROOT_DIR)/include $(GLOBAL_CXX_FLAGS) $(LIB_SDL2_CXXFLAGS) $(LIB_GL_CXXFLAGS)
 LD_FLAGS+=$(GLOBAL_LD_FLAGS) $(LIB_SDL2_LDFLAGS) $(LIB_GL_LDFLAGS)
-
 
 $(OBJECTS_DIR)/%.o: %.cpp 
 	$(CXX) $< -c $(CXXFLAGS) -o $@ 
@@ -36,9 +39,6 @@ $(OBJECTS_DIR)/%.o: fontlib/%.c
 $(STATIC_LIB): $(OBJECTS) $(OBJECTS_C)
 	@$(AR) rcs $@ $(OBJECTS) $(OBJECTS_C)
 	
-clean:
-	@rm -rf $(OBJECTS) $(STATIC_LIB)
-
 $(OBJECTS_DIR)/%.d: %.cpp
 	@echo "Building dependencies for $<"
 	@$(CXX) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@

@@ -17,7 +17,7 @@ class Slider : public Widget
 protected:
 	virtual void draw();
 public:
-	Slider(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL, Slider_type type = SLIDER_TYPE_HORIZONTAL);
+	Slider(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL, Slider_type type = SLIDER_TYPE_HORIZONTAL);
 
 	void set_type(Slider_type type){m_type = type;}
 

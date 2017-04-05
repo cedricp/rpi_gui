@@ -15,7 +15,7 @@ DEP_DOT_D=$(SOURCES:.cpp=.d)
 DEP_DOT_D+=$(SOURCES_C:.c=.d)
 DEPENDENCY_FILES=$(addprefix $(OBJECTS_DIR)/, $(DEP_DOT_D))	
 
-CXXFLAGS+=$(GLOBAL_CXX_FLAGS) -I../include
+CXXFLAGS+=$(GLOBAL_CXX_FLAGS) -I../include -I../include/terminal
 LD_FLAGS+=
 
 ###########################################################

@@ -76,7 +76,7 @@ protected:
     virtual void post_draw();
 
 public:
-    Widget(int x, int y, int width, int height, const char* name = "", Widget* parent = NULL);
+    Widget(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL);
     virtual ~Widget();
 
     void user_data(void* ud){m_user_data = ud;}
@@ -95,6 +95,8 @@ public:
     void bg_color(const FColor& color){
         m_bgcolor = color;
     }
+
+    void gradient(const FColor&top, const FColor& bottom);
 
     void backgroung_gradient_enable(bool e){
     	m_bg_gradient_enabled = e;
@@ -117,6 +119,7 @@ public:
     IBbox 	relative_bbox();
     void	drawing_area(IBbox& area);
     void 	screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy);
+    void	add_timer(int ms);
 
     virtual void resize(int x, int y, int w, int h);
     virtual void resize(int w, int h);
@@ -136,8 +139,8 @@ public:
     int  fixed_width(){return m_fixed_width;}
     int  fixed_height(){return m_fixed_height;}
 
-    void  fixed_width(int w){m_fixed_width = w;}
-    void  fixed_height(int h){m_fixed_height = h;}
+    void  fixed_width(int w);
+    void  fixed_height(int h);
 
     void horizontal_margin(int h){m_horizontal_margin = h;}
     void vertical_margin(int h){m_vertical_margin = h;}
@@ -173,13 +176,14 @@ public:
     void root(bool r){m_is_root = r;}
     bool root(){return m_is_root;}
 
-    void use_font(std::string font_name);
-    void use_default_font();
-    void load_font(std::string font_id, int size, int atlas_size = 1024);
+    void use_fonts(std::string font_name);
+    void use_fonts_id(int font_id);
+    void use_default_fonts();
+    int  load_fonts(std::string font_id, int size, int atlas_size = 1024);
     void set_top_widget(Widget* w);
 
-    void		 callback(WCallback* cb);
-    void		 callback(WCallback* cb, void* user_data);
+    void callback(WCallback* cb);
+    void callback(WCallback* cb, void* user_data);
 
 };
 

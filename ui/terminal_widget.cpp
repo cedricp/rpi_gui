@@ -1,9 +1,9 @@
 #include "terminal_widget.h"
 #include <SDL2/SDL.h>
 extern "C"{
-#include "hl_vt100.h"
-#include "lw_terminal_parser.h"
-#include "lw_terminal_vt100.h"
+#include "terminal/hl_vt100.h"
+#include "terminal/lw_terminal_parser.h"
+#include "terminal/lw_terminal_vt100.h"
 }
 struct Terminal_widget::impl{
 	SDL_Thread *thread;
@@ -40,7 +40,7 @@ Terminal_widget::Terminal_widget(int x, int y, int width, int height, const char
 	m_text->label("Init...");
 	std::string path;
 	if(painter().locate_resource("fonts/white_rabbit.ttf", path))
-		m_text->load_font(path, 12, 1024);
+		m_text->load_fonts(path, 12, 1024);
 }
 
 Terminal_widget::~Terminal_widget()
