@@ -220,25 +220,29 @@ Widget::gradient(const FColor&top, const FColor& bottom)
 }
 
 void
-Widget::resize(int x, int y, int w, int h)
+Widget::resize(int x, int y, int ww, int hh)
 {
-    m_bbox = IBbox(x, x + w, y, y + h);
+    m_bbox = IBbox(x, x + ww, y, y + hh);
     std::vector<Widget*>::iterator it = m_children_widgets.begin();
     for (; it < m_children_widgets.end(); ++it){
-    	(*it)->parent_resize_event(m_bbox);
+    	(*it)->parent_resize_event(w(), h());
     }
+    dirty(true);
 }
 
 void
-Widget::resize(int w, int h)
+Widget::resize(int ww, int hh)
 {
-    resize(m_bbox.xmin(), m_bbox.ymin(), w, h); 
+    resize(m_bbox.xmin(), m_bbox.ymin(), ww, hh);
 }
 
 void
-Widget::parent_resize_event(const IBbox& bbox)
+Widget::parent_resize_event(int width, int height)
 {
-
+    std::vector<Widget*>::iterator it = m_children_widgets.begin();
+    for (; it < m_children_widgets.end(); ++it){
+    	(*it)->parent_resize_event(width, height);
+    }
 }
 
 void

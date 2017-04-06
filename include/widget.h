@@ -56,7 +56,7 @@ protected:
     void		do_callback();
     static void default_callback(Widget*, void*);
 
-    virtual void parent_resize_event(const IBbox& bbox);
+    virtual void parent_resize_event(int width, int height);
     virtual bool enter_event();
     virtual bool leave_event();
     virtual bool key_press_event(const char* code);
@@ -122,7 +122,7 @@ public:
     void	add_timer(int ms);
 
     virtual void resize(int x, int y, int w, int h);
-    virtual void resize(int w, int h);
+    virtual void resize(int ww, int hh);
 
     void push_model_matrix();
     void pop_model_matrix();

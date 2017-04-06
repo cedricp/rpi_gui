@@ -102,7 +102,7 @@ File_chooser::set_path(std::string path)
 	int h = 20 * (dirs.size() + files.size());
 	IBbox lay_area;
 	m_main_layout->drawing_area(lay_area);
-	m_files_layout->resize(lay_area.width(), h);
+	((Widget*)m_files_layout)->resize(lay_area.width(), h);
 
 	for (int i = 0; i < dirs.size(); ++i){
 		Label* label_dir = new Label(0, 0, m_files_layout->w(), 20, dirs[i].c_str(), m_files_layout);
@@ -128,15 +128,10 @@ File_chooser::set_path(std::string path)
 }
 
 void
-File_chooser::resize(int x, int y, int w, int h)
+File_chooser::resize(int x, int y, int ww, int hh)
 {
-	Widget::resize(x,y,w,h);
-	m_main_layout->resize(w,h);
-	m_header_layout->resize(w,h);
+	Widget::resize(x,y,ww,hh);
 	set_path(m_path);
-	m_main_layout->compute_layout();
-	m_header_layout->compute_layout();
-	dirty(true);
 }
 
 void

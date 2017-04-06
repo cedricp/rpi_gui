@@ -5,6 +5,7 @@ Multi_panel::Multi_panel(int x, int y, int width, int height, const char* name, 
 	m_visible_widget = NULL;
 	m_layout_style = PANEL_LAYOUT_HORIZONTAL;
 	m_buttons_layout = new Layout(0,0, w() / 6, h(), "MainLayout", this, LAYOUT_HORIZONTAL);
+	m_buttons_layout->autoresize(false);
 }
 
 Multi_panel::~Multi_panel()
@@ -93,6 +94,7 @@ Multi_panel::compute_layout()
 		m_buttons_layout->resize(0,0, w(), h() / 6);
 		m_buttons_layout->compute_layout();
 	}
+	dirty(true);
 }
 
 void
@@ -103,6 +105,7 @@ Multi_panel::layout_style(Panel_layout l)
 		m_buttons_layout->style(LAYOUT_HORIZONTAL);
 	else
 		m_buttons_layout->style(LAYOUT_VERTICAL);
+	dirty(true);
 }
 
 void
@@ -110,5 +113,4 @@ Multi_panel::resize(int X, int Y, int W, int H)
 {
 	Widget::resize(X, Y, W, H);
 	compute_layout();
-	dirty(true);
 }

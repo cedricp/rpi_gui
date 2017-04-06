@@ -3,7 +3,7 @@
 Layout::Layout(int x, int y, int w, int h, const char* name, Widget* parent, Layout_style style) : Widget(x, y, w, h, name, parent)
 {
 	m_style = style;
-	m_autoresize = false;
+	m_autoresize = true;
 }
 
 Layout::~Layout()
@@ -19,12 +19,18 @@ Layout::style(Layout_style style)
 }
 
 void
-Layout::parent_resize_event(const IBbox& bbox)
+Layout::parent_resize_event(int width, int height)
 {
 	if (m_autoresize){
-		resize(bbox.xmin(), bbox.ymin(), bbox.width(), bbox.height());
-		compute_layout();
+		resize(0, 0, width, height);
 	}
+}
+
+void
+Layout::resize(int x, int y, int ww, int hh)
+{
+	Widget::resize(x,y, ww, hh);
+	compute_layout();
 }
 
 void
@@ -94,6 +100,7 @@ Layout::compute_layout()
 			}
 		}
 	}
+	dirty(true);
 }
 
 void

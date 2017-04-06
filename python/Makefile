@@ -3,10 +3,11 @@ MODULE=$(INSTALL_DIR)/python/_ui.so
 MODULEHW=$(INSTALL_DIR)/python/_hw.so
 INCLUDE_DIR=../include
 LIB_DIR=$(INSTALL_DIR)/lib
+INCFILES=$(wildcard ../include/*.h)
 
 all: $(MODULEHW) $(MODULE)
 
-%.c: %.i
+%.c: %.i $(INCFILES)
 	@test -d $(INSTALL_DIR)/python || mkdir  $(INSTALL_DIR)/python
 	@echo "Swig generation"
 	@swig -python -c++ -o $@ $<

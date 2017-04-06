@@ -20,9 +20,10 @@ public:
 
 	void style(Layout_style style);
 	void compute_layout();
-	void parent_resize_event(const IBbox& bbox);
 	void autoresize(bool a){m_autoresize = a;}
 	bool autoresize(){return m_autoresize;}
+	virtual void parent_resize_event(int width, int height);
+	virtual void resize(int x, int y, int w, int h);
 };
 
 #endif
