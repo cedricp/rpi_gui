@@ -52,16 +52,15 @@ class Radio(ui.Widget):
         self.file_man.parent(self.lay)
         self.file_man2.parent(self.lay)
         self.lay.parent(self.layout_v)
-    
         
 comp = ui.get_compositor()
 
 window = comp.create_new_window()
 panel = ui.Multi_panel(0,0,window.w(), window.h(), "MP", window)
 radio_tab = Radio(0,0, 200, 200, "RADIO", window)
-#x = ui.Button(0,0, 200, 200, "MUSIC", panel)
+x = ui.Button(0,0, 200, 200, "MUSIC", panel)
 but1=panel.add_tab(radio_tab)
-#but2=panel.add_tab(x)
+but2=panel.add_tab(x)
 
 comp.run()
 

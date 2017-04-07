@@ -124,6 +124,8 @@ public:
     virtual void resize(int x, int y, int w, int h);
     virtual void resize(int ww, int hh);
 
+    void move(int x, int y);
+
     void push_model_matrix();
     void pop_model_matrix();
     void translate(float x, float y, float z = 0.);

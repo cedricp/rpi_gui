@@ -26,6 +26,18 @@ Label::label(std::string l)
 	dirty(true);
 }
 
+int
+Label::text_width()
+{
+	return m_label_info.bbox.width();
+}
+
+int
+Label::text_height()
+{
+	return m_label_info.bbox.height();
+}
+
 void
 Label::draw()
 {

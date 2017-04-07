@@ -101,26 +101,36 @@ File_chooser::set_path(std::string path)
 
 	m_files_layout->destroy_children();
 
-	int h = 20 * (dirs.size() + files.size());
+	int h = 0;
 	IBbox lay_area;
 	m_main_layout->drawing_area(lay_area);
-	((Widget*)m_files_layout)->resize(lay_area.width(), h);
+	int text_max = lay_area.width();
 
 	for (int i = 0; i < dirs.size(); ++i){
-		Label* label_dir = new Label(0, 0, m_files_layout->w(), 20, dirs[i].c_str(), m_files_layout);
+		Label* label_dir = new Label(0, 0, 0, 0, dirs[i].c_str(), m_files_layout);
+		int text_height = label_dir->text_height() + 6;
 		label_dir->alignment(ALIGN_LEFT, ALIGN_CENTERV);
-		label_dir->fixed_height(20);
+		label_dir->fixed_height(text_height);
 		label_dir->fg_color(FColor(0.2, 0, 1, 1));
 		attachCallback(label_dir, static_dir_callback);
 		label_dir->transparent(true);
+		if (label_dir->text_width() > text_max)
+			text_max = label_dir->text_width();
+		h += text_height;
 	}
 	for (int i = 0; i < files.size(); ++i){
-		Label* label_file = new Label(0, 0, m_files_layout->w(), 20, files[i].c_str(), m_files_layout);
+		Label* label_file = new Label(0, 0, 0, 0, files[i].c_str(), m_files_layout);
+		int text_height = label_file->text_height() + 6;
 		label_file->alignment(ALIGN_LEFT, ALIGN_CENTERV);
-		label_file->fixed_height(20);
+		label_file->fixed_height(text_height);
 		attachCallback(label_file, static_file_callback);
 		label_file->transparent(true);
+		if (label_file->text_width() > text_max)
+			text_max = label_file->text_width();
+		h += text_height;
 	}
+
+	((Widget*)m_files_layout)->resize(text_max, h);
 
 	m_files_layout->compute_layout();
 	// Reset scrollview
@@ -133,7 +143,7 @@ void
 File_chooser::resize(int x, int y, int ww, int hh)
 {
 	Widget::resize(x,y,ww,hh);
-	set_path(m_path);
+	IBbox lay_area;
 	dirty(true);
 }
 

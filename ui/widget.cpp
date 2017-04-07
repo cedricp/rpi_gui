@@ -251,6 +251,12 @@ Widget::resize(int ww, int hh)
 }
 
 void
+Widget::move(int x,int  y)
+{
+	resize(x, y, w(), h());
+}
+
+void
 Widget::parent_resize_event(int width, int height)
 {
 
