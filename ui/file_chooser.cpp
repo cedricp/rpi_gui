@@ -58,6 +58,8 @@ File_chooser::File_chooser(int x, int y, int width, int height, const char* name
 
 	up->callback(static_dir_up_callback, this);
 
+	//m_main_layout->autoresize(false);
+
 	set_path(m_path);
 }
 
@@ -132,6 +134,7 @@ File_chooser::resize(int x, int y, int ww, int hh)
 {
 	Widget::resize(x,y,ww,hh);
 	set_path(m_path);
+	dirty(true);
 }
 
 void

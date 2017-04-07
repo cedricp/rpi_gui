@@ -14,10 +14,11 @@ class Multi_panel : public Widget
 {
 public:
 	Multi_panel(int x = 0, int y = 0, int width = 0, int height = 0, const char* name = "", Widget* parent = NULL);
-	~Multi_panel();
+	virtual ~Multi_panel();
 	Button* add_tab(Widget* w);
 	void show_tab(int tabnum);
 	void layout_style(Panel_layout l);
+	virtual void resize(int x, int y, int ww, int hh);
 private:
 	Widget* m_visible_widget;
 	std::vector<Widget*> m_widgets;
@@ -29,9 +30,6 @@ private:
 	static void static_button_callback(Widget* w, void* data){
 		((Multi_panel*)data)->button_callback(((Button*)w)->id());
 	}
-protected:
-	//void draw();
-	virtual void resize(int x, int y, int w, int h);
 };
 
 #endif

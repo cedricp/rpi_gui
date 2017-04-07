@@ -22,7 +22,8 @@ void
 Layout::parent_resize_event(int width, int height)
 {
 	if (m_autoresize){
-		resize(0, 0, width, height);
+		// Resize method will automatically call 'parent_resize_event'
+		resize(x(), y(), width, height);
 	}
 }
 

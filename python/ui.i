@@ -29,6 +29,7 @@ self.this.disown()
 %include "multi_panel.swig"
 %include "label.swig"
 %include "file_chooser.swig"
+%include "list_widget.swig"
 
 %pythoncode %{
 def get_compositor():

@@ -4,6 +4,8 @@ Scroll::Scroll(int x, int y, int width, int height, const char* name, Widget* pa
 {
 	m_scroll_widget = NULL;
 	m_oldx = m_oldy = 0;
+	// We don't want to resize content
+	resize_children(false);
 	if (m_children_widgets.size() > 0){
 		set_scroll_widget(m_children_widgets[0]);
 	}
@@ -60,6 +62,7 @@ Scroll::reset()
 		return;
 	m_scroll_widget->x(0);
 	m_scroll_widget->y(0);
+	dirty(true);
 }
 
 bool
@@ -82,4 +85,3 @@ Scroll::draw()
 {
 
 }
-

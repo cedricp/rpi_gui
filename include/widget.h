@@ -21,7 +21,7 @@ typedef WCallback* WCallback_p;
 class Widget{
     friend class Compositor;
     IBbox   	m_bbox;
-    bool   		m_visibility, m_transparent, m_is_root;
+    bool   		m_visibility, m_transparent, m_is_root, m_resize_children;
     WCallback	*m_callback;
     void		*m_callbackdata;
     std::string m_name;
@@ -185,6 +185,7 @@ public:
     void callback(WCallback* cb);
     void callback(WCallback* cb, void* user_data);
 
+    void resize_children(bool r){m_resize_children = r;}
 };
 
 #endif

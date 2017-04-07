@@ -52,6 +52,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_horizontal_margin = m_vertical_margin = 0;
     use_default_fonts();
     m_pattern_texture = painter().create_texture_bmp("tiles/carbon.bmp");
+    m_resize_children = true;
 
     matrix4_identity(m_model_matrix);
 
@@ -222,11 +223,24 @@ Widget::gradient(const FColor&top, const FColor& bottom)
 void
 Widget::resize(int x, int y, int ww, int hh)
 {
+	if (m_fixed_height > 0)
+		hh = m_fixed_height;
+	if (m_fixed_width > 0)
+		ww = m_fixed_width;
+
+	int oldw = w();
+	int oldh = h();
+
     m_bbox = IBbox(x, x + ww, y, y + hh);
-    std::vector<Widget*>::iterator it = m_children_widgets.begin();
-    for (; it < m_children_widgets.end(); ++it){
-    	(*it)->parent_resize_event(w(), h());
+
+    // Propagate to children if needed
+    if (m_resize_children && (oldw != w() || oldh != h())){
+	   std::vector<Widget*>::iterator it = m_children_widgets.begin();
+	   for (; it < m_children_widgets.end(); ++it){
+			(*it)->parent_resize_event(w(), h());
+		}
     }
+
     dirty(true);
 }
 
@@ -239,10 +253,7 @@ Widget::resize(int ww, int hh)
 void
 Widget::parent_resize_event(int width, int height)
 {
-    std::vector<Widget*>::iterator it = m_children_widgets.begin();
-    for (; it < m_children_widgets.end(); ++it){
-    	(*it)->parent_resize_event(width, height);
-    }
+
 }
 
 void
