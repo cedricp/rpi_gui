@@ -6,6 +6,7 @@ Multi_panel::Multi_panel(int x, int y, int width, int height, const char* name, 
 	m_layout_style = PANEL_LAYOUT_HORIZONTAL;
 	m_buttons_layout = new Layout(0, 0, 0, 0, "MainLayout", this, LAYOUT_HORIZONTAL);
 	resize_children(false);
+	m_ratio = 6;
 }
 
 Multi_panel::~Multi_panel()
@@ -45,6 +46,13 @@ Multi_panel::add_tab(Widget* wid)
 }
 
 void
+Multi_panel::buttons_ratio(int ratio)
+{
+	m_ratio = ratio;
+	dirty(true);
+}
+
+void
 Multi_panel::show_tab(int tabnum)
 {
 	if (tabnum < m_widgets.size()){
@@ -70,27 +78,25 @@ Multi_panel::button_callback(int butnum)
 void
 Multi_panel::compute_layout()
 {
-	int ratio = 6;
-
 	if (m_layout_style == PANEL_LAYOUT_VERTICAL){
-		int buttons_layout_size_x = w() / ratio + 1;
+		int buttons_layout_size_x = w() / m_ratio + 1;
 
 		for (int i = 0; i < m_buttons.size(); ++i){
 			m_buttons[i]->fixed_width(buttons_layout_size_x - 2);
 			m_buttons[i]->fixed_height(-1);
 		}
-		m_buttons_layout->resize(0,0, w() / ratio, h());
+		m_buttons_layout->resize(0,0, w() / m_ratio, h());
 		for (int i = 0; i < m_widgets.size(); ++i){
 			m_widgets[i]->resize(buttons_layout_size_x, 0, w() - buttons_layout_size_x, h());
 		}
 	} else {
-		int buttons_layout_size_y = h() / ratio + 1;
+		int buttons_layout_size_y = h() / m_ratio + 1;
 
 		for (int i = 0; i < m_buttons.size(); ++i){
 			m_buttons[i]->fixed_height(buttons_layout_size_y - 2);
 			m_buttons[i]->fixed_width(-1);
 		}
-		m_buttons_layout->resize(0,0, w(), h() / ratio);
+		m_buttons_layout->resize(0,0, w(), h() / m_ratio);
 		for (int i = 0; i < m_widgets.size(); ++i){
 			m_widgets[i]->resize(0, buttons_layout_size_y, w(), h() - buttons_layout_size_y);
 		}

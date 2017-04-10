@@ -89,18 +89,18 @@ Button::draw(){
 	if (m_style == STYLE_ROUNDED_FILLED){
 		if (!m_rounded_rect_data)
 			m_rounded_rect_data = painter().build_solid_rounded_rectangle(areaf, 8, 10);
-		painter().draw_solid_rounded_rectangle(*m_rounded_rect_data);
+		painter().draw_solid_tri_fans(*m_rounded_rect_data);
 	} else if (m_style == STYLE_TAB){
 		float hh = dah;
 		float ww = daw;
 		float vtx[] = { 0,hh, 0,0, ww - 8,0, ww,8, ww,hh };
 		vertex_container vc(10);
 		memcpy(vc.data(), vtx, 10*sizeof(float));
-		painter().draw_solid_rounded_rectangle(vc);
+		painter().draw_solid_tri_fans(vc);
 	} else if (m_style == STYLE_ROUNDED) {
 		if (!m_rounded_rect_data)
 			m_rounded_rect_data = painter().build_rounded_rectangle(areaf, 8, 10);
-		painter().draw_rounded_rectangle(*m_rounded_rect_data);
+		painter().draw_line_loop(*m_rounded_rect_data);
 	} else if (m_style == STYLE_CARBON) {
 		painter().draw_quad_gradient(0, 0, w(), h(),  m_toggled ? m_fgcolor : m_bgcolor, m_fgcolor, m_pattern_texture, 18);
 	}

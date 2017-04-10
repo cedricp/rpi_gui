@@ -49,6 +49,11 @@ public:
 		m_data = new float[size];
 		m_size = size;
 	}
+	vertex_container(float*p, size_t size){
+		m_data = new float[size];
+		m_data = (float*)memcpy((void*)m_data, (void*)p, size*sizeof(float));;
+		m_size = size;
+	}
 	~vertex_container(){
 		delete[] m_data;
 	}
@@ -60,8 +65,8 @@ public:
 		m_data = temp;
 		m_size = size;
 	}
-	inline float* data(){return m_data;}
-	inline size_t size(){return m_size;}
+	float* data(){return m_data;}
+	size_t size(){return m_size;}
 };
 
 class Painter
@@ -109,9 +114,12 @@ public:
 	unsigned int default_font_idx();
 	void use_default_gles_program();
 	vertex_container* build_solid_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner );
-	void draw_solid_rounded_rectangle(vertex_container& vc);
+	void draw_solid_tri_fans(vertex_container& vc);
+	void draw_solid_polygon_2d(vertex_container& vc);
 	vertex_container* build_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner );
-	void draw_rounded_rectangle(vertex_container& vc, float width = 1.5);
+	void draw_line_loop(vertex_container& vc, float width = 1.5);
+
+	vertex_container* create_polygon_2d(vertex_container* vc);
 };
 
 #endif

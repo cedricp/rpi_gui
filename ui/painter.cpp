@@ -91,6 +91,159 @@ struct PImpl{
 #endif
 };
 
+struct point
+{
+	float x, y;
+};
+
+struct contour
+{
+   struct point *p;
+   unsigned int count;
+};
+
+
+/*
+* C conversion of Efficient Polygon Triangulation
+* Found at http://www.flipcode.com/archives/Efficient_Polygon_Triangulation.shtml
+* Adapted and debugged for this use
+*/
+float area(const struct contour* contour)
+{
+   int p, q;
+   int n = contour->count - 1;
+   float A = 0.f;
+
+   for (p=n-1, q=0; q < n; p=q++)
+   {
+       A += contour->p[p].x * contour->p[q].y - contour->p[q].x * contour->p[p].y;
+   }
+   return A * .5f;
+}
+
+int
+inside_triangle(float Ax, float Ay,
+               float Bx, float By,
+               float Cx, float Cy,
+               float Px, float Py)
+{
+   float ax, ay, bx, by, cx, cy, apx, apy, bpx, bpy, cpx, cpy;
+   float cCROSSap, bCROSScp, aCROSSbp;
+
+   ax = Cx - Bx;  ay = Cy - By;
+   bx = Ax - Cx;  by = Ay - Cy;
+   cx = Bx - Ax;  cy = By - Ay;
+   apx= Px - Ax;  apy= Py - Ay;
+   bpx= Px - Bx;  bpy= Py - By;
+   cpx= Px - Cx;  cpy= Py - Cy;
+
+   aCROSSbp = ax*bpy - ay*bpx;
+   cCROSSap = cx*apy - cy*apx;
+   bCROSScp = bx*cpy - by*cpx;
+
+   return ((aCROSSbp >= 0.0f) && (bCROSScp >= 0.0f) && (cCROSSap >= 0.0f));
+}
+
+int
+snip(const struct point* pnt,int u,int v,int w,int n,int *V)
+{
+   int p;
+   float Ax, Ay, Bx, By, Cx, Cy, Px, Py;
+
+   Ax = pnt[V[u]].x;
+   Ay = pnt[V[u]].y;
+
+   Bx = pnt[V[v]].x;
+   By = pnt[V[v]].y;
+
+   Cx = pnt[V[w]].x;
+   Cy = pnt[V[w]].y;
+
+   if ( (((Bx-Ax)*(Cy-Ay)) - ((By-Ay)*(Cx-Ax))) < 0.f )
+       return 0;
+
+   for (p=0;p<n;p++)
+   {
+       if( (p == u) || (p == v) || (p == w) )
+           continue;
+       Px = pnt[V[p]].x;
+       Py = pnt[V[p]].y;
+       if (inside_triangle(Ax,Ay,Bx,By,Cx,Cy,Px,Py))
+           return 0;
+   }
+
+   return 1;
+}
+
+int
+process_triangles_2d(const struct contour* contour, struct contour* result)
+{
+   int v;
+   int contour_size = contour->count;
+   int polygon_temp_size = contour_size * 80;
+   int final_count = 0;
+   result->p = (point*)malloc(sizeof(struct point) * polygon_temp_size);
+
+   int n = contour_size;
+   if ( n < 3 ) return 0;
+
+   int *V = (int*)alloca(sizeof(int)*n);
+
+   if ( 0.0f < area(contour) )
+       for (v=0; v<n; v++) V[v] = v;
+   else
+       for(v=0; v<n; v++) V[v] = (n-1)-v;
+
+   int nv = n;
+
+   int count = 2*nv;
+
+   for(v=nv-1; nv>2; )
+   {
+       /* if we loop, it is probably a non-simple polygon */
+       if (0 >= (count--))
+       {
+           //** Triangulate: ERROR - probable bad polygon!
+           break;
+       }
+
+       /* three consecutive vertices in current polygon, <u,v,w> */
+       int u = v  ; if (nv <= u) u = 0;     /* previous */
+       v = u+1; if (nv <= v) v = 0;         /* new v    */
+       int w = v+1; if (nv <= w) w = 0;     /* next     */
+
+       if ( snip(contour->p,u,v,w,nv,V) )
+       {
+           int a,b,c,s,t;
+
+           /* true names of the vertices */
+           a = V[u]; b = V[v]; c = V[w];
+
+           /* output Triangle */
+           result->p[final_count++] = contour->p[a];
+           result->p[final_count++] = contour->p[b];
+           result->p[final_count++] = contour->p[c];
+
+           if (final_count >= polygon_temp_size){
+               free(result->p);
+               return 0;
+           }
+
+           /* remove v from remaining polygon */
+           for(s=v,t=v+1;t<nv;s++,t++)
+               V[s] = V[t];
+           nv--;
+
+           /* reset error detection counter */
+           count = 2*nv;
+       }
+   }
+
+   result->count = final_count;
+
+   return 1;
+}
+
 Text_data::Text_data()
 {
 	data = new FontImpl;
@@ -223,7 +376,7 @@ Painter::Painter()
 	init_gles2();
 #endif
 	std::string font_file;
-	std::string font_name = "fonts/white_rabbit.ttf";
+	std::string font_name = "fonts/Roboto-Regular.ttf";
 	if( locate_resource(font_name, font_file) ){
 		m_impl->default_font_idx = load_fonts(font_file, 16);
 	} else {
@@ -1127,7 +1280,7 @@ Painter::build_solid_rounded_rectangle( const FBbox &r, float cornerRadius, int 
 }
 
 void
-Painter::draw_solid_rounded_rectangle(vertex_container& vc)
+Painter::draw_solid_tri_fans(vertex_container& vc)
 {
 	GLfloat *verts = vc.data();
 #ifdef USE_OPENGL
@@ -1143,6 +1296,26 @@ Painter::draw_solid_rounded_rectangle(vertex_container& vc)
 	glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, verts);
 	glEnableVertexAttribArray ( glprog.vertex_handle );
 	glDrawArrays ( GL_TRIANGLE_FAN, 0, vc.size() / 2);
+#endif
+}
+
+void
+Painter::draw_solid_polygon_2d(vertex_container& vc)
+{
+	GLfloat *verts = vc.data();
+#ifdef USE_OPENGL
+	glPolygonMode(GL_FRONT, GL_FILL);
+	glBegin(GL_TRIANGLE_STRIP);
+	for(int i = 0; i < vc.size(); i+=2){
+		glVertex2f(verts[i], verts[i+1]);
+	}
+	glEnd();
+#else
+	gl_program& glprog = m_impl->gl_pgm[GL_PROGRAM_SOLID];
+	glUseProgram(glprog.program_handle);
+	glVertexAttribPointer ( glprog.vertex_handle, 2, GL_FLOAT, GL_FALSE, 0, verts);
+	glEnableVertexAttribArray ( glprog.vertex_handle );
+	glDrawArrays ( GL_TRIANGLE_STRIP, 0, vc.size() / 2);
 #endif
 }
 
@@ -1177,7 +1350,7 @@ Painter::build_rounded_rectangle( const FBbox &r, float cornerRadius, int numSeg
 }
 
 void
-Painter::draw_rounded_rectangle(vertex_container& vc, float width)
+Painter::draw_line_loop(vertex_container& vc, float width)
 {
 	GLfloat *verts = vc.data();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1197,4 +1370,33 @@ Painter::draw_rounded_rectangle(vertex_container& vc, float width)
 	glEnableVertexAttribArray ( glprog.vertex_handle );
 	glDrawArrays ( GL_LINE_LOOP, 0, vc.size() / 2 );
 #endif
+}
+
+vertex_container*
+Painter::create_polygon_2d(vertex_container* vc)
+{
+	contour in, out;
+	in.count = vc->size() / 2;
+	in.p = new point[in.count];
+	float *data = vc->data();
+
+	for (int i = 0; i < in.count; ++i){
+		in.p[i].x = data[i*2];
+		in.p[i].y = data[i*2+1];
+	}
+
+	bool ok = process_triangles_2d(&in, &out);
+	delete[] in.p;
+
+	if(ok){
+		vertex_container* newvc = new vertex_container(out.count*2);
+		float* newvcdata = newvc->data();
+		for (int i = 0; i < out.count; ++i){
+			newvcdata[i*2] = out.p[i].x;
+			newvcdata[i*2+1] = out.p[i].y;
+		}
+		free(out.p);
+		return newvc;
+	}
+	return NULL;
 }

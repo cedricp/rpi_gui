@@ -60,6 +60,7 @@ Compositor::Compositor()
 {
     m_impl = new Impl;
     m_curr_mousex = m_curr_mousey = m_drag_x = m_drag_y = 0;
+    m_modal_widget = NULL;
     int sdl_status =  SDL_Init(SDL_INIT_VIDEO);
     if (sdl_status != 0){
     	fprintf(stderr, "\nUnable to initialize SDL: %i %s\n", sdl_status, SDL_GetError() );
@@ -199,12 +200,23 @@ Compositor::advert_widget_deleted(Widget* w)
 	if (m_impl->widget_under_mouse == w){
 		m_impl->widget_under_mouse = NULL;
 	}
+	if (m_modal_widget == w){
+		m_modal_widget = NULL;
+	}
 }
 
 void 
 Compositor::add_widget(Widget* w)
 {
     m_widgets.push_back(w);
+}
+
+void
+Compositor::add_modal_widget(Widget* w, int x, int y)
+{
+	w->move(x,y);
+	w->parent(NULL);
+	m_modal_widget = w;
 }
 
 Widget*
@@ -263,7 +275,9 @@ Compositor::widget_exists(Widget* w)
 void 
 Compositor::remove_widget(Widget* w)
 {
-    std::vector<Widget*>::iterator it = std::find(m_widgets.begin(), m_widgets.end(), w);
+	advert_widget_deleted(w);
+
+	std::vector<Widget*>::iterator it = std::find(m_widgets.begin(), m_widgets.end(), w);
     if ( it != m_widgets.end() ){
         m_widgets.erase(it);
     } else {
@@ -307,6 +321,14 @@ Compositor::handle_mouse_button_event(int button, bool push)
 
     Widget *which;
     which = NULL;
+
+    if (m_modal_widget){
+    	bool focus_widget = m_modal_widget->screen_bbox().contains(x, y);
+    	if (!focus_widget){
+    		m_modal_widget->hide();
+    		m_modal_widget = NULL;
+    	}
+    }
 
     // A drag operation is in progress, let's manage it
     if (m_focus_drag_widget){
@@ -359,7 +381,6 @@ Compositor::handle_mouse_button_event(int button, bool push)
 int
 Compositor::add_timer_event(int ms, void* data)
 {
-	SDL_TimerID timer = 0;
 	return SDL_AddTimer(ms, timerCallback, data);
 }
 
@@ -515,7 +536,7 @@ Compositor::run()
 			case SDL_USEREVENT:
 				switch (event.user.code){
 				case TIMER_EVENT:
-					((Widget*)event.user.data1)->timer_event(event.user.data2);
+					need_update |= ((Widget*)event.user.data1)->timer_event(event.user.data2);
 					break;
 				case USER_EVENT:
 					need_update |= ((Widget*)event.user.data1)->custom_event(event.user.data2);

@@ -32,6 +32,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_tiles_enabled		  = false;
     m_is_root	= false;
     m_user_data = NULL;
+    m_modal		= false;
     
     m_bg_gradient_top = FColor(0.2f,0.2f,.2f, 1.f);
     m_bg_gradient_bottom = FColor(.5f,.5f,.5f, 1.0f);
@@ -257,9 +258,30 @@ Widget::move(int x,int  y)
 }
 
 void
+Widget::modal(int x, int y)
+{
+	m_modal = true;
+	show();
+	COMPOSITOR->add_modal_widget(this, x, y);
+}
+
+void
 Widget::parent_resize_event(int width, int height)
 {
 
+}
+
+bool
+Widget::hidden()
+{
+	// Recursive check of visibility
+	if (!m_visibility)
+		return true;
+
+	if (parent())
+		return parent()->hidden();
+
+	return false;
 }
 
 void
@@ -313,7 +335,10 @@ Widget::parent(Widget* w)
         if (COMPOSITOR->widget_exists(this)){
         	COMPOSITOR->remove_widget(this);
         }
-        w->add_child(this);
+        if (w)
+        	w->add_child(this);
+        else
+        	COMPOSITOR->add_widget(this);
     }
     m_parent = w;
 }
@@ -434,7 +459,7 @@ Widget::mouse_press_event(int button)
 	return true;
 }
 
-void
+bool
 Widget::timer_event(void* data)
 {
 }
@@ -536,10 +561,16 @@ Widget::screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy)
     wy = sy - y;
 }
 
-void
+int
 Widget::add_timer(int ms)
 {
-	COMPOSITOR->add_timer_event(ms, this);
+	return COMPOSITOR->add_timer_event(ms, this);
+}
+
+void
+Widget::remove_timer(int timer_id)
+{
+	COMPOSITOR->remove_timer(timer_id);
 }
 
 Widget*
@@ -776,16 +807,32 @@ Widget::translate(float x, float y, float z)
 {
 	Matrix pos_matrix;
 	matrix4_translate(pos_matrix, x, y);
-	matrix4_mult(m_model_matrix, pos_matrix, m_model_matrix);
+	matrix4_mult(m_model_matrix, m_model_matrix, pos_matrix);
 	painter().load_model_matrix(m_model_matrix);
 }
 
 void
 Widget::rotate(float x, float y, float z, float angle)
 {
-	Matrix pos_matrix;
-	matrix4_rotate(pos_matrix, x, y, z, angle * M_PI / 180.);
-	matrix4_mult(m_model_matrix, pos_matrix, m_model_matrix);
+	Matrix rot_matrix;
+	matrix4_rotate(rot_matrix, x, y, z, angle * M_PI / 180.);
+	matrix4_mult(m_model_matrix, m_model_matrix, rot_matrix);
+	painter().load_model_matrix(m_model_matrix);
+}
+
+void
+Widget::scale(float x, float y, float z)
+{
+	Matrix sca_matrix;
+	matrix4_scale(sca_matrix, x, y, z);
+	matrix4_mult(m_model_matrix, m_model_matrix, sca_matrix);
+	painter().load_model_matrix(m_model_matrix);
+}
+
+void
+Widget::identity()
+{
+	matrix4_identity(m_model_matrix);
 	painter().load_model_matrix(m_model_matrix);
 }
 

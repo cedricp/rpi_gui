@@ -21,7 +21,7 @@ typedef WCallback* WCallback_p;
 class Widget{
     friend class Compositor;
     IBbox   	m_bbox;
-    bool   		m_visibility, m_transparent, m_is_root, m_resize_children;
+    bool   		m_visibility, m_transparent, m_is_root, m_resize_children, m_modal;
     WCallback	*m_callback;
     void		*m_callbackdata;
     std::string m_name;
@@ -66,7 +66,7 @@ protected:
     virtual bool mouse_wheel_event(int button);
     virtual bool mouse_motion_event(int x, int y);
     virtual bool drag_event(int rel_x, int rel_y);
-    virtual void timer_event(void* data);
+    virtual bool timer_event(void* data);
     virtual bool custom_event(void* data);
     virtual bool accept_drag(int x, int y);
     virtual void widget_added_event(Widget* widget);
@@ -119,7 +119,9 @@ public:
     IBbox 	relative_bbox();
     void	drawing_area(IBbox& area);
     void 	screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy);
-    void	add_timer(int ms);
+    int		add_timer(int ms);
+    void	remove_timer(int timer_id);
+    void	modal(int x, int y);
 
     virtual void resize(int x, int y, int w, int h);
     virtual void resize(int ww, int hh);
@@ -130,6 +132,8 @@ public:
     void pop_model_matrix();
     void translate(float x, float y, float z = 0.);
     void rotate(float x, float y, float z, float angle);
+    void scale(float x, float y, float z);
+    void identity();
     
     void mouse_pos(int&x, int&y);
 
@@ -150,7 +154,7 @@ public:
     int horizontal_margin(){return m_horizontal_margin;}
     int vertical_margin(){return m_vertical_margin;}
 
-    bool hidden(){return !m_visibility;}
+    bool hidden();
     void parent(Widget* w);
     void update(bool full_redraw = false);
     void damage(const IBbox& other);

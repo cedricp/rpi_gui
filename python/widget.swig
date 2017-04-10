@@ -65,6 +65,7 @@ CHANGE_OWNERSHIP(Widget)
 %include "../include/widget.h"
 
 %ignore Widget::mouse_pos(int&x, int&y);
+%ignore Widget::drawing_area(IBbox&);
 
 %extend Widget {
 	PyObject*
@@ -78,6 +79,15 @@ CHANGE_OWNERSHIP(Widget)
 		PyTuple_SetItem(ret, 0, pyx);
 		PyTuple_SetItem(ret, 1, pyy);
 		return ret;
+	}
+	
+	PyObject*
+	drawing_area()
+	{
+		IBbox* bb = new IBbox;
+		self->drawing_area(*bb);
+		PyObject* bbox = SWIG_NewPointerObj((void*)bb, SWIGTYPE_p_BboxT_int_t, 1);
+		return bbox;
 	}
 
   	void

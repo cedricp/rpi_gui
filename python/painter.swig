@@ -52,6 +52,30 @@ PyObject* create_matrix(Matrix m){
 
 %include "../include/painter.h"
 
+%extend vertex_container {
+	vertex_container(PyObject* ob){
+		if(!PyList_Check(ob)){
+			std::cerr << "vertex_container::set_points : Argument must be a list of floats" << std::endl;
+			return NULL;
+		}
+		size_t size = PyList_Size(ob);
+		vertex_container* vc = new vertex_container(size);
+		float *data = vc->data();
+		for (int i = 0; i < size; ++i){
+			PyObject* item = PyList_GetItem(ob, i);
+			if (!PyFloat_Check(item)){
+				delete vc;
+				std::cerr << "vertex_container::set_points : Argument must be a list of floats" << std::endl;
+				return NULL;
+			}
+			data[i] = PyFloat_AsDouble(item);
+		}
+		return vc;
+	}
+}
+
+%newobject vertex_container::vertex_container;
+
 %extend Painter {
 	PyObject* locate_resource(const char* filename){
 		std::string path;

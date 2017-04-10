@@ -21,7 +21,7 @@ struct SDL_KeyboardEvent;
 
 class Compositor {
     std::vector<Widget*> m_widgets;
-    Widget* m_focus_drag_widget;
+    Widget *m_focus_drag_widget, *m_modal_widget;
     int		m_drag_x, m_drag_y;
     bool	m_drag_started;
     Impl 	*m_impl;
@@ -46,6 +46,7 @@ public:
     static 	Compositor* get_singleton();
     void 	remove_widget(Widget* w);
     void 	add_widget(Widget* w);
+    void	add_modal_widget(Widget*, int, int);
     bool 	widget_exists(Widget* w);
     void 	set_root_widget(Widget* w);
     void	set_top_widget(Widget* w);

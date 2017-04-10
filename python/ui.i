@@ -30,6 +30,7 @@ self.this.disown()
 %include "label.swig"
 %include "file_chooser.swig"
 %include "list_widget.swig"
+%include "navit_widget.swig"
 
 %pythoncode %{
 def get_compositor():
