@@ -7,65 +7,37 @@
 #
 ###########################################################################################
 
-# The path to your cross gcc compiler directory
-CROSSGCC_ROOT=/sources/RPI/RPI_DEV/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin
-
-# If you're cross compiling, you likely want to change the 2 lines above
-SYSROOT?=/sources/RPI/RPI_DEV/deb_root
-SDL_ROOT_CROSSPI?=/sources/RPI/RPI_DEV/INSTALL
+# If you're cross compiling, you likely want to change the line below
+SYSROOT?=/usr
 
 # If you're builing for a X86 on a X86 :)
 SDL_ROOT_X86?=/sources/RTL/RADIO/INSTALL
 
-# If you're compiling from the PI
-SDL_ROOT_PI?=/home/cedric/DEV/ROOT_INSTALL
-
-PYTHON_EXE?=/usr/bin/python
+# Be sure to define these variables
+PYTHON_EXE?=`which python`
+SWIG?=`which swig`
 
 ###########################################################################################
 
 PYTHON_VERSION=${shell ${PYTHON_EXE} --version 2> /dev/stdout | cut -c 8-10}
 
 ifndef BUILD
-$(error Variable BUILD not specified use BUILD=X86 or BUILD=CROSSPI)
+$(error Variable BUILD not specified use BUILD=X86 or BUILD=PI)
 endif
 
 SRC_ROOT_DIR=$(shell pwd)
-PYTHON_INCLUDE=/usr/include/python$(PYTHON_VERSION)
+PYTHON_INCLUDE?=$(SYSROOT)/include/python$(PYTHON_VERSION)
 
-ifeq ($(BUILD),CROSSPI)
-PLATFORM=RPI_CROSS
-CC=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-gcc-4.8.3
-CXX=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-g++
-AR=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-ar
-LD=$(CROSSGCC_ROOT)/arm-linux-gnueabihf-ld
-INSTALL_DIR=$(SRC_ROOT_DIR)/BUILD_RPI
-GLOBAL_CXX_FLAGS+=--sysroot=$(SYSROOT) -I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/usr/include -g
-GLOBAL_LD_FLAGS+=--sysroot=$(SYSROOT) -L$(SYSROOT)/usr/lib -L$(SYSROOT)/usr/lib/arm-linux-gnueabihf
-
-LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_CROSSPI)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic
-LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_CROSSPI)/include
-
-LIB_GLES2_LDFLAGS=-L$(SYSROOT)/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
-LIB_GLES2_CXXFLAGS=-I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/opt/vc/include/interface/vcos/pthreads/
-
-LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
-LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
-
-LIB_FREETYPE2_LDFLAGS=-lfreetype
-LIB_FREETYPE2_CXXFLAGS=-I$(SYSROOT)/usr/include/freetype2
-$(warning Building ARM cross compilation code for raspberrypi EGL - GLES2)
-else
 ifeq ($(BUILD),PI)
 PLATFORM=RPI
 LIB_FREETYPE2_LDFLAGS=-lfreetype
-LIB_FREETYPE2_CXXFLAGS=-I$(SYSROOT)/usr/include/freetype2
+LIB_FREETYPE2_CXXFLAGS=-I$(SYSROOT)/include/freetype2
 
-LIB_SDL2_LDFLAGS=-L$(SDL_ROOT_PI)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic
-LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_PI)/include
+LIB_SDL2_LDFLAGS=-L$(SYSROOT)/lib -Wl,-Bstatic -lSDL2 -Wl,-Bdynamic -lts
+LIB_SDL2_CXXFLAGS=-I$(SYSROOT)/include
 
-LIB_GLES2_LDFLAGS=-L$(SDL_ROOT_PI)/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
-LIB_GLES2_CXXFLAGS=-I$(SDL_ROOT_PI)/opt/vc/include -I$(SDL_ROOT_PI)/opt/vc/include/interface/vcos/pthreads/
+LIB_GLES2_LDFLAGS=-L$(SYSROOT)/opt/vc/lib -lm -lbcm_host -lvcos -lvchiq_arm -lGLESv2 -lEGL 
+LIB_GLES2_CXXFLAGS=-I$(SYSROOT)/opt/vc/include -I$(SYSROOT)/opt/vc/include/interface/vcos/pthreads/
 
 LIB_GL_LDFLAGS=$(LIB_GLES2_LDFLAGS)
 LIB_GL_CXXFLAGS=$(LIB_GLES2_CXXFLAGS) -DUSE_GLES2=1
@@ -82,7 +54,6 @@ LIB_SDL2_CXXFLAGS=-I$(SDL_ROOT_X86)/include
 LIB_GL_LDFLAGS=-lGL -lGLU
 LIB_GL_CXXFLAGS=-I/usr/inlcude -DUSE_OPENGL=1
 $(warning Building X86 code X11 GLX)
-endif
 endif
 endif
 
@@ -106,8 +77,8 @@ APPS_LD_FLAGS=-lui -lutils -lhw_fm -lhw_tda7419 -lwiringpi -lutil
 
 export
 
-.PHONY: make_paths utils ui tests clean hardware python
-all: make_paths utils hardware ui tests python
+.PHONY: check make_paths utils ui tests clean hardware python
+all: check make_paths utils hardware ui tests python
 
 hardware:
 	$(MAKE) -C hardware
@@ -133,9 +104,18 @@ clean:
 distclean: clean
 	rm -rf $(INSTALL_DIR)
 
+check:
+	@echo "Found SWIG : ${SWIG}"
+	@echo "Python executable : ${PYTHON_EXE} version ${PYTHON_VERSION}"
+	@echo "Python include dir : ${PYTHON_INCLUDE}" 
+	@echo "System root : ${SYSROOT}"
+	@echo "C Compiler : ${CC}"
+	@echo "C++ Compiler : ${CXX}"
+
 make_paths:
 	@test -d $(OBJECTS_DIR) || mkdir -p $(OBJECTS_DIR)
 	@test -d $(INSTALL_LIB_DIR) || mkdir -p $(INSTALL_LIB_DIR)
 	@test -d $(BIN_DIR) || mkdir -p $(BIN_DIR)
 	@test -d $(INSTALL_RESOURCES_DIR)|| mkdir -p $(INSTALL_RESOURCES_DIR)
 	@cp -urf   resources/* $(INSTALL_RESOURCES_DIR)
+	

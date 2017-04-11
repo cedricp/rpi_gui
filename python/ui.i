@@ -9,7 +9,7 @@ self.this.disown()
 %}
 %enddef
 
-%include stl.i
+%include std_string.i
 
 %include "../include/color.h"
 %template(FColor) Color<float>;
