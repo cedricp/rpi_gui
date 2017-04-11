@@ -327,6 +327,7 @@ Compositor::handle_mouse_button_event(int button, bool push)
     	if (!focus_widget){
     		m_modal_widget->hide();
     		m_modal_widget = NULL;
+    		return true;
     	}
     }
 
@@ -393,10 +394,17 @@ Compositor::remove_timer(int timer_id)
 bool
 Compositor::handle_mouse_wheel_event(int wheel_ev)
 {
+
     std::vector<Widget*>::reverse_iterator it = m_widgets.rbegin();
 
     int x, y;
     SDL_GetMouseState(&x, &y);
+
+    if (m_modal_widget){
+    	bool focus_widget = m_modal_widget->screen_bbox().contains(x, y);
+    	if (!focus_widget)
+    		return false;
+    }
 
     Widget *which;
     which = NULL;
@@ -417,6 +425,12 @@ Compositor::handle_mouse_move_event(int x, int y)
 {
 	m_curr_mousex = x;
 	m_curr_mousey = y;
+
+    if (m_modal_widget){
+    	bool focus_widget = m_modal_widget->screen_bbox().contains(x, y);
+    	if (!focus_widget)
+    		return false;
+    }
 
     Widget *which;
     which = NULL;
@@ -590,10 +604,18 @@ Compositor::run()
 #else
         	// Back buffer should be clean (modified SDL with GL_PRESERVE_BUFFER)
 #endif
-
+        	std::vector<Widget*>::iterator it2;
         	it = m_widgets.begin();
-			for(;it != m_widgets.end();++it)
+			for(;it != m_widgets.end();++it){
+				// Check if we need to update covered widgets
+				for (it2 = it; it2 != m_widgets.end();++it2){
+					if ( (*it2)->dirty() && (*it)->screen_bbox().intersects((*it2)->screen_bbox()) ){
+						(*it)->dirty(true);
+					}
+				}
+
 				(*it)->update(full_update);
+			}
 
 			SDL_GL_SwapWindow(m_impl->window);
         }

@@ -4,13 +4,14 @@ MODULEHW=$(INSTALL_DIR)/python/_hw.so
 INCLUDE_DIR=../include
 LIB_DIR=$(INSTALL_DIR)/lib
 INCFILES=$(wildcard ../include/*.h)
+SWIG?=/usr/bin/swig
 
 all: $(MODULEHW) $(MODULE)
 
 %.c: %.i $(INCFILES)
 	@test -d $(INSTALL_DIR)/python || mkdir  $(INSTALL_DIR)/python
-	@echo "Swig generation"
-	@swig -python -c++ -o $@ $<
+	@echo "Swig generation $<"
+	@$(SWIG) -python -c++ -o $@ $<
 
 ui.c: $(SWIGFILES)
 hw.c: $(SWIGFILES)

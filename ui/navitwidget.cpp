@@ -157,6 +157,19 @@ Navit_widget::resize(int x, int y, int w, int h)
 	send_cmd(buffer);
 }
 
+void
+Navit_widget::zoom(bool in)
+{
+	char buffer[40];
+	if (in)
+		sprintf(buffer, "zoomin");
+	else
+		sprintf(buffer, "zoomout");
+
+	send_cmd(buffer);
+}
+
+
 bool
 Navit_widget::custom_event(void* data)
 {

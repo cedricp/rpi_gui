@@ -2,6 +2,42 @@ import sys, os
 sys.path.append("/sources/GUI/BUILD_X86/python")
 import ui
 
+class Navit_control(ui.Widget):
+    def __init__(self, X=0, Y=0, W=0, H=0, name='', parent = None):
+        ui.Widget.__init__(self,X, Y, W, H, name, parent)
+        self.navit_widget = ui.Navit_widget()
+        self.layout_h = ui.Layout()
+        self.layout_h.style(ui.LAYOUT_HORIZONTAL)
+        
+        self.layout_v = ui.Layout()
+        self.layout_v.style(ui.LAYOUT_VERTICAL)
+        
+        self.zoom_in = ui.Button()
+        self.zoom_in.label("ZOOM IN")
+        self.zoom_in.style(ui.Button.STYLE_CARBON)
+        
+        self.zoom_out = ui.Button()
+        self.zoom_out.label("ZOOM OUT")
+        self.zoom_out.style(ui.Button.STYLE_CARBON)
+        
+        self.zoom_in.callback(self.zoom_cb, 0)
+        self.zoom_out.callback(self.zoom_cb, 1)
+        
+        self.layout_v.fixed_width(80)
+        
+        self.zoom_in.parent(self.layout_v)
+        self.zoom_out.parent(self.layout_v)
+        
+        self.layout_v.parent(self.layout_h)
+        self.navit_widget.parent(self.layout_h)
+        self.layout_h.parent(self)     
+           
+    def zoom_cb(self, data):
+        if data == 0:
+            self.navit_widget.zoom(True)
+        else:
+            self.navit_widget.zoom(False)
+
 class Test(ui.Widget):
      def __init__(self, X=0, Y=0, W=0, H=0, name='', parent = None):
         ui.Widget.__init__(self,X, Y, W, H, name, parent)
@@ -99,7 +135,7 @@ panel.buttons_ratio(8)
 
 radio_tab = Radio(0,0, 200, 200, "RADIO", window)
 x = ui.Button(0,0, 200, 200, "MUSIC", panel)
-navit = ui.Navit_widget(0,0,0,0,"NAVIT")
+navit = Navit_control(0,0,0,0,"NAVIT")
 
 but1=panel.add_tab(radio_tab)
 but2=panel.add_tab(x)

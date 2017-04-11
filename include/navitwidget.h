@@ -15,6 +15,8 @@ public:
 	Navit_widget(int x=0, int y=0, int width=0, int height=0, const char* name = "", Widget* parent = NULL);
 	~Navit_widget();
 
+	void zoom(bool in);
+
 	virtual bool mouse_release_event(int button);
 	virtual bool mouse_press_event(int button);
 	virtual bool mouse_motion_event(int x, int y);
