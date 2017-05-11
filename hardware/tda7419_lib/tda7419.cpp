@@ -64,17 +64,12 @@ TDA7419_control::init()
     _atten_sub        =  9;
 }
 
-void TDA7419_control::writeToTDA7419 (int command, int value)
+void TDA7419_control::writeToTDA7419 (int reg, int value)
 {
-//    _device.start();
-//    transmissionSuccessful  = _device.write(TDA7419_ADDRESS<<1);
-//    transmissionSuccessful |= _device.write(command);
-//    transmissionSuccessful |= _device.write(value);
-//    _device.stop();
 	int fd  = wiringPiI2CSetup(TDA7419_ADDRESS);
 	if (fd < 0)
 		printf("TDA7419_control::writeToTDA7419 : cannot open I2C device.\n");
-	wiringPiI2CWriteReg8 (fd, command, value);
+	wiringPiI2CWriteReg8 (fd, reg, value);
 	close(fd);
 }
 

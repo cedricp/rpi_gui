@@ -1,10 +1,12 @@
+# -*- coding: latin-1 -*-
 import sys, os
 sys.path.append("/sources/GUI/BUILD_X86/python")
 import ui
 
+
 class Navit_control(ui.Widget):
     def __init__(self, X=0, Y=0, W=0, H=0, name='', parent = None):
-        ui.Widget.__init__(self,X, Y, W, H, name, parent)
+        super(Navit_control, self).__init__(X, Y, W, H, name, parent)
         self.navit_widget = ui.Navit_widget()
         self.layout_h = ui.Layout()
         self.layout_h.style(ui.LAYOUT_HORIZONTAL)
@@ -38,9 +40,10 @@ class Navit_control(ui.Widget):
         else:
             self.navit_widget.zoom(False)
 
+
 class Test(ui.Widget):
      def __init__(self, X=0, Y=0, W=0, H=0, name='', parent = None):
-        ui.Widget.__init__(self,X, Y, W, H, name, parent)
+        super(Test, self).__init__(X, Y, W, H, name, parent)
         vtx = [10., 0., 6., 70., 4., 70., 0., 0.]
         data = ui.vertex_container(vtx)
         self.v = self.painter().create_polygon_2d(data)
@@ -77,9 +80,10 @@ class Test(ui.Widget):
         self.painter().draw_solid_polygon_2d(self.v)
         self.pop_model_matrix()
 
+
 class Radio(ui.Widget):
     def __init__(self, X, Y, W, H, name, parent):
-        ui.Widget.__init__(self,X, Y, W, H, name, parent)
+        super(Radio, self).__init__(X, Y, W, H, name, parent)
         # Look for the font resource file
         fnt_resource = self.painter().locate_resource("fonts/custom.ttf")
         # Enable background tiling
@@ -116,31 +120,30 @@ class Radio(ui.Widget):
         self.lay = ui.Layout(0, 0, self.w(), 85,"??", None, ui.LAYOUT_HORIZONTAL)
         self.file_man = ui.File_chooser()
         self.file_man2 = Test()
+      
+        self.layout_tune.add_widget(self.button_scan_low)
+        self.layout_tune.add_widget(self.tune_display)
+        self.layout_tune.add_widget(self.button_scan_hi)
         
-        self.button_scan_low.parent(self.layout_tune)      
-        self.tune_display.parent(self.layout_tune)
-        self.button_scan_hi.parent(self.layout_tune)  
-        
-        self.rds_display.parent(self.layout_v)
-        self.file_man.parent(self.lay)
-        self.file_man2.parent(self.lay)
-        self.lay.parent(self.layout_v)
-        
-        
+        self.layout_v.add_widget(self.rds_display)
+        self.lay.add_widget(self.file_man)
+        self.lay.add_widget(self.file_man2)
+        self.layout_v.add_widget(self.lay)
+
+
 comp = ui.get_compositor()
 
 window = comp.create_new_window()
 panel = ui.Multi_panel(0,0,window.w(), window.h(), "MP", window)
 panel.buttons_ratio(8)
 
-radio_tab = Radio(0,0, 200, 200, "RADIO", window)
+radio_tab = Radio(0,0, 200, 200, "RADIOé", window)
 x = ui.Button(0,0, 200, 200, "MUSIC", panel)
 navit = Navit_control(0,0,0,0,"NAVIT")
 
 but1=panel.add_tab(radio_tab)
 but2=panel.add_tab(x)
 but3=panel.add_tab(navit)
-
 
 comp.run()
 

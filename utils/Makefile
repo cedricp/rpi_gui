@@ -5,6 +5,7 @@
 ###########################################################
 
 SOURCES=$(wildcard *.cpp) 
+SOURCES+=$(wildcard mp3_player/*.cpp)
 SOURCES_C=$(wildcard *.c)
 SOURCES_C+=$(wildcard vt100-emu/*.c)
 OBJECTS=$(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES))
@@ -39,6 +40,7 @@ clean:
 	
 $(OBJECTS_DIR)/%.d: %.cpp
 	@echo "Building dependencies for $<"
+	@test -d $(OBJECTS_DIR)/mp3_player || mkdir $(OBJECTS_DIR)/mp3_player
 	@$(CXX) $< -MM $(CXXFLAGS) -MT $(OBJECTS_DIR)/$(<:.cpp=.o) -o $@	
 
 $(OBJECTS_DIR)/%.d: %.c

@@ -93,10 +93,12 @@ read_image_thread(void* ptr)
 		if (h.magic != 0xDEADBEEF){
 			std::cout << "bad header..." << std::endl;
 			char dummy;
-			size_t cnt = 1;
+			int cnt = 1;
 			// Flush remaining data
 			while(cnt > 0){
 				cnt = read(fd_image, &dummy, 1);
+				if (cnt == -1)
+					break;
 			}
 			continue;
 		}

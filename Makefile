@@ -68,11 +68,12 @@ UI_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libui.a
 UTILS_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libutils.a
 HW_FM_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libhw_fm.a
 HW_TDA7419_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libhw_tda7419.a
+HW_LCD_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libhw_lcd.a
 WIRINGPI_LIBRARY_NAME=$(INSTALL_LIB_DIR)/libwiringpi.a
 
 # Globals
 GLOBAL_CXX_FLAGS+=-fPIC -I$(PYTHON_INCLUDE) -D_REENTRANT -ggdb $(LIB_FREETYPE2_CXXFLAGS) -I$(SRC_ROOT_DIR)/utils -I$(SRC_ROOT_DIR)/hardware/fm_lib -I$(SRC_ROOT_DIR)/hardware/tda7419_lib
-GLOBAL_LD_FLAGS+=-L$(INSTALL_LIB_DIR) $(LIB_FREETYPE2_LDFLAGS) -ldl -lpthread -lrt
+GLOBAL_LD_FLAGS+=-L$(INSTALL_LIB_DIR) $(LIB_FREETYPE2_LDFLAGS) -ldl -lpthread -lrt -lmad
 APPS_LD_FLAGS=-lui -lutils -lhw_fm -lhw_tda7419 -lwiringpi -lutil
 
 export
@@ -105,12 +106,12 @@ distclean: clean
 	rm -rf $(INSTALL_DIR)
 
 check:
-	@echo "Found SWIG : ${SWIG}"
+	@echo -e "\033[0;31mFound SWIG : ${SWIG}"
 	@echo "Python executable : ${PYTHON_EXE} version ${PYTHON_VERSION}"
 	@echo "Python include dir : ${PYTHON_INCLUDE}" 
 	@echo "System root : ${SYSROOT}"
 	@echo "C Compiler : ${CC}"
-	@echo "C++ Compiler : ${CXX}"
+	@echo -e "C++ Compiler : ${CXX}\033[0m"
 
 make_paths:
 	@test -d $(OBJECTS_DIR) || mkdir -p $(OBJECTS_DIR)

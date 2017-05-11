@@ -20,6 +20,7 @@ public:
 
 	void style(Layout_style style);
 	void compute_layout();
+	void add_widget(Widget* w){if (w)w->parent(this);}
 	void autoresize(bool a){m_autoresize = a;}
 	bool autoresize(){return m_autoresize;}
 	virtual void parent_resize_event(int width, int height);
