@@ -598,9 +598,11 @@ Compositor::run()
 			}
         } while (SDL_PollEvent(&event) != 0); // Pump events before drawing
 
+        char* buffer = new char[800*480*4];
         if (need_update || full_update){
+			painter().copy_front_to_back(0, 0, 800, 480);
 #ifdef USE_OPENGL
-        	full_update = true;
+        	//full_update = true;
 #else
         	// Back buffer should be clean (modified SDL with GL_PRESERVE_BUFFER)
 #endif

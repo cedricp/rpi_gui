@@ -50,10 +50,9 @@ File_chooser::File_chooser(int x, int y, int width, int height, const char* name
 	m_main_layout->compute_layout();
 	m_header_layout->compute_layout();
 
-	backgroung_gradient_enable(true);
-	tiles_enabled(true);
+	m_scroll_view->backgroung_gradient_enable(true);
+	m_scroll_view->tiles_enabled(true);
 	m_main_layout->transparent(true);
-	m_scroll_view->transparent(true);
 	m_files_layout->transparent(true);
 
 	up->callback(static_dir_up_callback, this);

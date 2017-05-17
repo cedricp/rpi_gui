@@ -118,7 +118,7 @@ public:
 	void draw_solid_polygon_2d(vertex_container& vc);
 	vertex_container* build_rounded_rectangle( const FBbox &r, float cornerRadius, int numSegmentsPerCorner );
 	void draw_line_loop(vertex_container& vc, float width = 1.5);
-
+	void copy_front_to_back(int x, int y, int width, int height);
 	vertex_container* create_polygon_2d(vertex_container* vc);
 };
 

@@ -50,17 +50,17 @@ class Test(ui.Widget):
         self.add_timer(5)
         self.r = 10.
         
-        self.wid = ui.Button(0,0,200,200, "OK?")
-        self.wid.callback(self.cb, self.wid)
-        self.wid.hide()
+        #self.wid = ui.Button(0,0,200,200, "OK?")
+        #self.wid.callback(self.cb, self.wid)
+        #self.wid.hide()
         
-     def mouse_release_event(self, but):
-        self.wid.resize(200,200)
-        self.wid.modal(300,140)
+#     def mouse_release_event(self, but):
+#        self.wid.resize(200,200)
+#        self.wid.modal(300,140)
      
-     def cb(self, data):
-        print "CB"
-        self.wid.hide()
+#     def cb(self, data):
+#        print "CB"
+#        self.wid.hide()
      
      def timer_event(self, data):
         if self.hidden():

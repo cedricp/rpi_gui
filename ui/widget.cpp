@@ -384,11 +384,14 @@ void Widget::remove_child(Widget* w)
     }
 }
 
-void 
+bool
 Widget::update(bool full_redraw)
 {
 	if (m_visibility == false)
-		return;
+		return false;
+
+	if (full_redraw)
+		std::cout << "Full update " << name() << std::endl;
 
     std::vector<Widget*>::iterator it = m_children_widgets.begin();
     for (; it < m_children_widgets.end(); ++it){
@@ -404,10 +407,15 @@ Widget::update(bool full_redraw)
 	if (m_dirty || full_redraw)
     	internal_draw(full_redraw);
 
+	bool updated = false;
     it = m_children_widgets.begin();
     for (; it < m_children_widgets.end(); ++it){
-    	(*it)->update(full_redraw);
+    	updated = (*it)->update(full_redraw);
     }
+
+    m_dirty = false;
+
+    return updated;
 }
 
 // If a widget is overlapping this one, tag it as dirty to force redraw
@@ -429,7 +437,8 @@ Widget::enter_event()
 {
 	if (m_parent && m_parent->root()){
 		m_parent->set_top_widget(this);
-		dirty(true);
+		// TODO : Fix this, ugly
+		//dirty(true);
 		return true;
 	} else if (m_parent){
 		return m_parent->enter_event();
