@@ -1229,7 +1229,7 @@ Painter::locate_resource(std::string name, std::string &path)
 
 	std::string resource_path = std::string(resource_env) + "/resources/" + name;
 
-	if( access( resource_path.c_str(), F_OK ) == 0 ) {
+	if( ::access( resource_path.c_str(), F_OK ) == 0 ) {
 		path = resource_path;
 		return true;
 	}
