@@ -156,7 +156,7 @@ public:
 
     bool hidden();
     void parent(Widget* w);
-    bool update(bool full_redraw = false);
+    bool update(bool full_redraw = false, bool clear_dirty_flag = true);
     void damage(const IBbox& other);
     void transparent(bool on){m_transparent = on;}
     void set_background_tiles(std::string filename);

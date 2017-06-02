@@ -598,28 +598,26 @@ Compositor::run()
 			}
         } while (SDL_PollEvent(&event) != 0); // Pump events before drawing
 
-        char* buffer = new char[800*480*4];
         if (need_update || full_update){
-			painter().copy_front_to_back(0, 0, 800, 480);
-#ifdef USE_OPENGL
-        	//full_update = true;
-#else
-        	// Back buffer should be clean (modified SDL with GL_PRESERVE_BUFFER)
-#endif
         	std::vector<Widget*>::iterator it2;
         	it = m_widgets.begin();
 			for(;it != m_widgets.end();++it){
 				// Check if we need to update covered widgets
-				for (it2 = it; it2 != m_widgets.end();++it2){
-					if ( (*it2)->dirty() && (*it)->screen_bbox().intersects((*it2)->screen_bbox()) ){
-						(*it)->dirty(true);
-					}
-				}
+//				for (it2 = it; it2 != m_widgets.end();++it2){
+//					if ( (*it2)->dirty() && (*it)->screen_bbox().intersects((*it2)->screen_bbox()) ){
+//						(*it)->dirty(true);
+//					}
+//				}
 
-				(*it)->update(full_update);
+				(*it)->update(full_update, false);
 			}
 
 			SDL_GL_SwapWindow(m_impl->window);
+
+			// Redraw back buffer
+			for(it = m_widgets.begin();it != m_widgets.end();++it){
+				(*it)->update(full_update, true);
+			}
         }
     }
 

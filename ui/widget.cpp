@@ -210,8 +210,6 @@ void Widget::internal_draw(bool force)
     // Call widget custom draw method
     draw();
     painter().scissor_end();
-
-    m_dirty = false;
 }
 
 void
@@ -288,7 +286,7 @@ void
 Widget::hide()
 {
     m_visibility = false;
-    m_dirty = true;
+    m_dirty = false;
 }
 
 void
@@ -385,35 +383,35 @@ void Widget::remove_child(Widget* w)
 }
 
 bool
-Widget::update(bool full_redraw)
+Widget::update(bool full_redraw, bool clear_dirty_flag)
 {
-	if (m_visibility == false)
+	if (m_visibility == false){
+		m_dirty = false;
 		return false;
-
-	if (full_redraw)
-		std::cout << "Full update " << name() << std::endl;
+	}
 
     std::vector<Widget*>::iterator it = m_children_widgets.begin();
-    for (; it < m_children_widgets.end(); ++it){
-    	if ((*it)->m_dirty && (*it)->m_transparent){
-    		full_redraw = true;
-    		break;
-    	}
-    }
+//    for (; it < m_children_widgets.end(); ++it){
+//    	if ((*it)->m_dirty && (*it)->m_transparent){
+//    		full_redraw = true;
+//    		break;
+//    	}
+//    }
 
     if (m_dirty)
     	full_redraw = true;
 
-	if (m_dirty || full_redraw)
+	if (m_dirty || full_redraw){
     	internal_draw(full_redraw);
+	}
 
 	bool updated = false;
-    it = m_children_widgets.begin();
-    for (; it < m_children_widgets.end(); ++it){
-    	updated = (*it)->update(full_redraw);
+    for (it = m_children_widgets.begin(); it < m_children_widgets.end(); ++it){
+    	updated = (*it)->update(full_redraw, clear_dirty_flag);
     }
 
-    m_dirty = false;
+    if (clear_dirty_flag)
+    	m_dirty = false;
 
     return updated;
 }

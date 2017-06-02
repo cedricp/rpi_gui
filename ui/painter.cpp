@@ -1404,10 +1404,12 @@ Painter::create_polygon_2d(vertex_container* vc)
 void
 Painter::copy_front_to_back(int x, int y, int width, int height)
 {
+#ifdef USE_OPENGL
 	glReadBuffer( GL_FRONT );
 	glDrawBuffer( GL_BACK );
 	glCopyPixels( x, y, width, height, GL_COLOR );
-#ifdef USE_OPENGL
 	glFlush();
+#else
+
 #endif
 }

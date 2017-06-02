@@ -42,7 +42,7 @@ class Navit_control(ui.Widget):
 
 
 class Test(ui.Widget):
-     def __init__(self, X=0, Y=0, W=0, H=0, name='', parent = None):
+     def __init__(self, X=0, Y=0, W=0, H=0, name='Eager', parent = None):
         super(Test, self).__init__(X, Y, W, H, name, parent)
         vtx = [10., 0., 6., 70., 4., 70., 0., 0.]
         data = ui.vertex_container(vtx)
@@ -137,7 +137,7 @@ window = comp.create_new_window()
 panel = ui.Multi_panel(0,0,window.w(), window.h(), "MP", window)
 panel.buttons_ratio(8)
 
-radio_tab = Radio(0,0, 200, 200, "RADIOé", window)
+radio_tab = Radio(0,0, 200, 200, "RADIO", window)
 x = ui.Button(0,0, 200, 200, "MUSIC", panel)
 navit = Navit_control(0,0,0,0,"NAVIT")
 
