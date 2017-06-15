@@ -48,12 +48,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <errno.h>
-#include <string.h>
+#include <string.h>+
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <asm/ioctl.h>
 
 #include "wiringPiI2C.h"
+
+int wiringPiDebug       = 0;
+int wiringPiReturnCodes = 0;
+
+
+#define	WPI_ALMOST	(1==2)
 
 // I2C definitions
 
@@ -97,29 +105,45 @@ struct i2c_smbus_ioctl_data
   union i2c_smbus_data *data ;
 } ;
 
-static int piModel2 = 0;
-
-static void piBoardRevOops (const char *why)
+int wiringPiFailure (int fatal, const char *message, ...)
 {
-  fprintf (stderr, "piBoardRev: Unable to determine board revision from /proc/cpuinfo\n") ;
+  va_list argp ;
+  char buffer [1024] ;
+
+  if (!fatal && wiringPiReturnCodes)
+    return -1 ;
+
+  va_start (argp, message) ;
+    vsnprintf (buffer, 1023, message, argp) ;
+  va_end (argp) ;
+
+  fprintf (stderr, "%s", buffer) ;
+  exit (EXIT_FAILURE) ;
+
+  return 0 ;
+}
+
+static void piGpioLayoutOops (const char *why)
+{
+  fprintf (stderr, "Oops: Unable to determine board revision from /proc/cpuinfo\n") ;
   fprintf (stderr, " -> %s\n", why) ;
-  fprintf (stderr, " ->  You may want to check:\n") ;
-  fprintf (stderr, " ->  http://www.raspberrypi.org/phpBB3/viewtopic.php?p=184410#p184410\n") ;
+  fprintf (stderr, " ->  You'd best google the error to find out why.\n") ;
+//fprintf (stderr, " ->  http://www.raspberrypi.org/phpBB3/viewtopic.php?p=184410#p184410\n") ;
   exit (EXIT_FAILURE) ;
 }
 
-int piBoardRev (void)
+int piGpioLayout (void)
 {
   FILE *cpuFd ;
   char line [120] ;
   char *c ;
-  static int  boardRev = -1 ;
+  static int  gpioLayout = -1 ;
 
-  if (boardRev != -1)	// No point checking twice
-    return boardRev ;
+  if (gpioLayout != -1)	// No point checking twice
+    return gpioLayout ;
 
   if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
-    piBoardRevOops ("Unable to open /proc/cpuinfo") ;
+    piGpioLayoutOops ("Unable to open /proc/cpuinfo") ;
 
 // Start by looking for the Architecture to make sure we're really running
 //	on a Pi. I'm getting fed-up with people whinging at me because
@@ -130,21 +154,23 @@ int piBoardRev (void)
       break ;
 
   if (strncmp (line, "Hardware", 8) != 0)
-    piBoardRevOops ("No hardware line") ;
+    piGpioLayoutOops ("No \"Hardware\" line") ;
 
+  if (wiringPiDebug)
+    printf ("piGpioLayout: Hardware: %s\n", line) ;
 
-// See if it's BCM2708 or BCM2709
+// See if it's BCM2708 or BCM2709 or the new BCM2835.
 
-  if (strstr (line, "BCM2709") != NULL)	// Pi v2 - no point doing anything more at this point
-  {
-    piModel2 = 1;
-    fclose (cpuFd) ;
-    return boardRev = 2 ;
-  }
-  else if (strstr (line, "BCM2708") == NULL)
+// OK. As of Kernel 4.8,  we have BCM2835 only, regardless of model.
+//	However I still want to check because it will trap the cheapskates and rip-
+//	off merchants who want to use wiringPi on non-Raspberry Pi platforms - which
+//	I do not support so don't email me your bleating whinges about anything
+//	other than a genuine Raspberry Pi.
+
+  if (! (strstr (line, "BCM2708") || strstr (line, "BCM2709") || strstr (line, "BCM2835")))
   {
     fprintf (stderr, "Unable to determine hardware version. I see: %s,\n", line) ;
-    fprintf (stderr, " - expecting BCM2708 or BCM2709.\n") ;
+    fprintf (stderr, " - expecting BCM2708, BCM2709 or BCM2835.\n") ;
     fprintf (stderr, "If this is a genuine Raspberry Pi then please report this\n") ;
     fprintf (stderr, "to projects@drogon.net. If this is not a Raspberry Pi then you\n") ;
     fprintf (stderr, "are on your own as wiringPi is designed to support the\n") ;
@@ -152,8 +178,11 @@ int piBoardRev (void)
     exit (EXIT_FAILURE) ;
   }
 
-// Now do the rest of it as before - we just need to see if it's an older
-//	Rev 1 as anything else is rev 2.
+// Right - we're Probably on a Raspberry Pi. Check the revision field for the real
+//	hardware type
+//	In-future, I ought to use the device tree as there are now Pi entries in
+//	/proc/device-tree/ ...
+//	but I'll leave that for the next revision.
 
 // Isolate the Revision line
 
@@ -165,13 +194,15 @@ int piBoardRev (void)
   fclose (cpuFd) ;
 
   if (strncmp (line, "Revision", 8) != 0)
-    piBoardRevOops ("No \"Revision\" line") ;
+    piGpioLayoutOops ("No \"Revision\" line") ;
 
 // Chomp trailing CR/NL
 
   for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
     *c = 0 ;
 
+  if (wiringPiDebug)
+    printf ("piGpioLayout: Revision string: %s\n", line) ;
 
 // Scan to the first character of the revision number
 
@@ -180,7 +211,7 @@ int piBoardRev (void)
       break ;
 
   if (*c != ':')
-    piBoardRevOops ("Bogus \"Revision\" line (no colon)") ;
+    piGpioLayoutOops ("Bogus \"Revision\" line (no colon)") ;
 
 // Chomp spaces
 
@@ -189,42 +220,30 @@ int piBoardRev (void)
     ++c ;
 
   if (!isxdigit (*c))
-    piBoardRevOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
+    piGpioLayoutOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
 
 // Make sure its long enough
 
   if (strlen (c) < 4)
-    piBoardRevOops ("Bogus revision line (too small)") ;
+    piGpioLayoutOops ("Bogus revision line (too small)") ;
 
-// If you have overvolted the Pi, then it appears that the revision
-//	has 100000 added to it!
-// The actual condition for it being set is:
-//	 (force_turbo || current_limit_override || temp_limit>85) && over_voltage>0
-
-
-// This test is not correct for the new encoding scheme, so we'll remove it here as
-//	we don't really need it at this point.
-
-/********************
-  if (wiringPiDebug)
-    if (strlen (c) != 4)
-      printf ("piboardRev: This Pi has/is (force_turbo || current_limit_override || temp_limit>85) && over_voltage>0\n") ;
-*******************/
-
-// Isolate  last 4 characters:
+// Isolate  last 4 characters: (in-case of overvolting or new encoding scheme)
 
   c = c + strlen (c) - 4 ;
 
+  if (wiringPiDebug)
+    printf ("piGpioLayout: last4Chars are: \"%s\"\n", c) ;
 
   if ( (strcmp (c, "0002") == 0) || (strcmp (c, "0003") == 0))
-    boardRev = 1 ;
+    gpioLayout = 1 ;
   else
-    boardRev = 2 ;	// Covers everything else from the B revision 2 to the B+, the Pi v2 and CM's.
+    gpioLayout = 2 ;	// Covers everything else from the B revision 2 to the B+, the Pi v2, v3, zero and CM's.
 
+  if (wiringPiDebug)
+    printf ("piGpioLayoutOops: Returning revision: %d\n", gpioLayout) ;
 
-  return boardRev ;
+  return gpioLayout ;
 }
-
 
 static inline int i2c_smbus_access (int fd, char rw, uint8_t command, int size, union i2c_smbus_data *data)
 {
@@ -257,7 +276,7 @@ int wiringPiI2CRead (int fd)
 
 /*
  * wiringPiI2CReadReg8: wiringPiI2CReadReg16:
- *	Read an 8 or 16-bit value from a register on the device
+ *	Read an 8 or 16-bit value from a regsiter on the device
  *********************************************************************************
  */
 
@@ -329,10 +348,10 @@ int wiringPiI2CSetupInterface (const char *device, int devId)
   int fd ;
 
   if ((fd = open (device, O_RDWR)) < 0)
-    return -1;
+    return wiringPiFailure (WPI_ALMOST, "Unable to open I2C device: %s\n", strerror (errno)) ;
 
   if (ioctl (fd, I2C_SLAVE, devId) < 0)
-    return -2;
+    return wiringPiFailure (WPI_ALMOST, "Unable to select I2C device: %s\n", strerror (errno)) ;
 
   return fd ;
 }
@@ -349,7 +368,7 @@ int wiringPiI2CSetup (const int devId)
   int rev ;
   const char *device ;
 
-  rev = piBoardRev () ;
+  rev = piGpioLayout () ;
 
   if (rev == 1)
     device = "/dev/i2c-0" ;

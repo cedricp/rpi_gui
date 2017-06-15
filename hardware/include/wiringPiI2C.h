@@ -21,8 +21,6 @@
  *    If not, see <http://www.gnu.org/licenses/>.
  ***********************************************************************
  */
-#define	WPI_FATAL	(1==1)
-#define	WPI_ALMOST	(1==2)
 
 #ifdef __cplusplus
 extern "C" {

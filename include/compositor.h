@@ -26,6 +26,8 @@ class Compositor {
     bool	m_drag_started;
     Impl 	*m_impl;
     int 	m_curr_mousex, m_curr_mousey;
+    bool	m_touchscreen_enabled;
+    bool	m_is_init;
     bool handle_mouse_button_event(int, bool);
     bool handle_key_event(SDL_KeyboardEvent* key_ev, bool push);
     bool handle_mouse_wheel_event(int);
@@ -39,6 +41,8 @@ public:
     Compositor();
     ~Compositor();
     
+    void init(int width = 800, int height = 480,const char *touchscreendev = NULL);
+
     Painter& painter();
     int		add_timer_event(int ms, void* data);
     void	send_callback_event(void *from, void* data);
@@ -61,6 +65,8 @@ public:
     void	cursor(Compositor_cursors c);
     void	advert_widget_deleted(Widget* w);
     void	set_widget_as_window(Widget* wid);
+    bool	touchscreen_enabled(){return m_touchscreen_enabled;}
+    void	enable_cursor(bool e);
 };
 
 #define COMPOSITOR Compositor::get_singleton()

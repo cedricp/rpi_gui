@@ -175,6 +175,10 @@ Button::mouse_release_event(int button){
 
 bool
 Button::enter_event(){
+
+	if (touchscreen_enabled()){
+		return Widget::enter_event();;
+	}
 	Widget::enter_event();
 	if (m_toggled)
 		return false;
@@ -185,6 +189,11 @@ Button::enter_event(){
 
 bool
 Button::leave_event(){
+	if (touchscreen_enabled()){
+		m_fgcolor = m_original_fg;
+		dirty(true);
+		return false;
+	}
 	if (m_toggled)
 		return false;
 	m_fgcolor = m_original_fg;

@@ -33,6 +33,7 @@ Widget::Widget(int x, int y, int width, int height, const char* name, Widget* pa
     m_is_root	= false;
     m_user_data = NULL;
     m_modal		= false;
+    m_refresh_backbuffer = true;
     
     m_bg_gradient_top = FColor(0.2f,0.2f,.2f, 1.f);
     m_bg_gradient_bottom = FColor(.5f,.5f,.5f, 1.0f);
@@ -407,6 +408,8 @@ Widget::update(bool full_redraw, bool clear_dirty_flag)
 
 	bool updated = false;
     for (it = m_children_widgets.begin(); it < m_children_widgets.end(); ++it){
+    	if (!(*it)->backbuffer_refresh() && clear_dirty_flag)
+    		continue;
     	updated = (*it)->update(full_redraw, clear_dirty_flag);
     }
 
@@ -767,7 +770,16 @@ Widget::use_fonts(std::string font_name)
 void
 Widget::use_fonts_id(int font_id)
 {
+	if (m_font_id == font_id)
+		return;
+
 	m_font_id = font_id;
+	fonts_changed(font_id);
+}
+
+void
+Widget::fonts_changed(int font_id)
+{
 }
 
 void
@@ -863,4 +875,10 @@ void
 Widget::push_event(UIEvent* evt){
 	if (evt)
 		SDL_PushEvent(&evt->event);
+}
+
+bool
+Widget::touchscreen_enabled()
+{
+	return COMPOSITOR->touchscreen_enabled();
 }

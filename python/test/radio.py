@@ -49,6 +49,7 @@ class Test(ui.Widget):
         self.v = self.painter().create_polygon_2d(data)
         self.add_timer(5)
         self.r = 10.
+        self.backbuffer_refresh(False)
         
         #self.wid = ui.Button(0,0,200,200, "OK?")
         #self.wid.callback(self.cb, self.wid)
@@ -84,8 +85,6 @@ class Test(ui.Widget):
 class Radio(ui.Widget):
     def __init__(self, X, Y, W, H, name, parent):
         super(Radio, self).__init__(X, Y, W, H, name, parent)
-        # Look for the font resource file
-        fnt_resource = self.painter().locate_resource("fonts/custom.ttf")
         # Enable background tiling
         self.tiles_enabled(True)
         
@@ -95,7 +94,7 @@ class Radio(ui.Widget):
         self.layout_tune.fixed_height(85)
         
         self.tune_display = ui.Label()
-        self.bigfonts = self.tune_display.load_fonts(fnt_resource, 80)
+        self.bigfonts = self.tune_display.load_fonts("fonts/custom.ttf", 80)
         self.tune_display.fixed_width(300)
         self.tune_display.fg_color(ui.FColor(.2,.2,.8,1.))
         self.tune_display.label("107.70")
@@ -132,6 +131,7 @@ class Radio(ui.Widget):
 
 
 comp = ui.get_compositor()
+comp.init(800, 480, "Test")
 
 window = comp.create_new_window()
 panel = ui.Multi_panel(0,0,window.w(), window.h(), "MP", window)
@@ -144,6 +144,7 @@ navit = Navit_control(0,0,0,0,"NAVIT")
 but1=panel.add_tab(radio_tab)
 but2=panel.add_tab(x)
 but3=panel.add_tab(navit)
+
 
 comp.run()
 

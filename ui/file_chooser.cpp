@@ -31,6 +31,8 @@ get_content(std::string path, std::vector<std::string>& dirs, std::vector<std::s
 
 File_chooser::File_chooser(int x, int y, int width, int height, const char* name, Widget* parent) : Widget(x, y, width, height, name, parent)
 {
+	m_text_fonts = -1;
+	m_is_text_init = false;
 	m_path = "/";
 
 	m_main_layout = new Layout(0, 0, 0, 0, "", this, LAYOUT_VERTICAL);
@@ -57,24 +59,29 @@ File_chooser::File_chooser(int x, int y, int width, int height, const char* name
 
 	up->callback(static_dir_up_callback, this);
 
-	//m_main_layout->autoresize(false);
-
 	set_path(m_path);
+}
+
+void
+File_chooser::set_text_font(std::string fontname, int fontsize, int atlassize)
+{
+	m_text_fonts = painter().load_fonts(fontname, fontsize, atlassize);
+	m_is_text_init = false;
 }
 
 void
 File_chooser::dir_up_callback(Label* l)
 {
-	m_path += "/..";
-	set_path(m_path);
+	std::string new_path = m_path + "/..";
+	set_path(new_path);
 }
 
 void
 File_chooser::dir_callback(Label* l)
 {
-	m_path += "/";
-	m_path += l->name();
-	set_path(m_path);
+	std::string new_path = m_path + "/";
+	new_path += l->name();
+	set_path(new_path);
 }
 
 void
@@ -91,12 +98,18 @@ File_chooser::file_callback(Label* l)
 void
 File_chooser::set_path(std::string path)
 {
+	if (path == m_path)
+		return;
 	m_path = path;
-	char resolved_path[PATH_MAX];
-	realpath(m_path.c_str(), resolved_path);
-	m_path = resolved_path;
+	m_is_text_init = false;
+	dirty(true);
+}
+
+void
+File_chooser::init_text()
+{
 	std::vector<std::string> dirs, files;
-	get_content(path, dirs, files);
+	get_content(m_path, dirs, files);
 
 	m_files_layout->destroy_children();
 
@@ -107,6 +120,10 @@ File_chooser::set_path(std::string path)
 
 	for (int i = 0; i < dirs.size(); ++i){
 		Label* label_dir = new Label(0, 0, 0, 0, dirs[i].c_str(), m_files_layout);
+		if (m_text_fonts >= 0){
+			label_dir->label(dirs[i].c_str());
+			label_dir->use_fonts_id(m_text_fonts);
+		}
 		int text_height = label_dir->text_height() + 6;
 		label_dir->alignment(ALIGN_LEFT, ALIGN_CENTERV);
 		label_dir->fixed_height(text_height);
@@ -119,6 +136,10 @@ File_chooser::set_path(std::string path)
 	}
 	for (int i = 0; i < files.size(); ++i){
 		Label* label_file = new Label(0, 0, 0, 0, files[i].c_str(), m_files_layout);
+		if (m_text_fonts >= 0){
+			label_file->label( files[i].c_str());
+			label_file->use_fonts_id(m_text_fonts);
+		}
 		int text_height = label_file->text_height() + 6;
 		label_file->alignment(ALIGN_LEFT, ALIGN_CENTERV);
 		label_file->fixed_height(text_height);
@@ -135,6 +156,8 @@ File_chooser::set_path(std::string path)
 	// Reset scrollview
 	m_scroll_view->reset();
 	// We must redraw the view...
+
+	m_is_text_init = true;
 	dirty(true);
 }
 
@@ -149,6 +172,8 @@ File_chooser::resize(int x, int y, int ww, int hh)
 void
 File_chooser::draw()
 {
+	if(!m_is_text_init)
+		init_text();
 	painter().disable_texture();
 	painter().enable_alpha(false);
 	painter().color(FColor(.1,.1,.3,1.));

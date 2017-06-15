@@ -45,12 +45,12 @@
 #define LCD_5x8DOTS 0x00
 
 // flags for backlight control
-#define LCD_BACKLIGHT 0x00
-#define LCD_NOBACKLIGHT 0x80
+#define LCD_BACKLIGHT 0b00001000
+#define LCD_NOBACKLIGHT 0x0
 
-#define En 0b00010000  // Enable bit
-#define Rw 0b00100000  // Read/Write bit
-#define Rs 0b01000000  // Register select bit
+#define En 0b00000100  // Enable bit
+#define Rw 0b00000010  // Read/Write bit
+#define Rs 0b00000001  // Register select bit
 
 class LiquidCrystal_I2C {
 public:
@@ -86,13 +86,12 @@ public:
 	void load_custom_character(uint8_t char_num, uint8_t *rows);
 
 private:
-	void writeI2C (int command, int value);
 	void writeI2C (int command);
 	void init_priv();
-	void send(uint8_t, uint8_t);
-	void write4bits(uint8_t);
-	void expanderWrite(uint8_t);
-	void pulseEnable(uint8_t);
+	void send(uint8_t, uint8_t mode = 0);
+	void write4bits(uint8_t, uint8_t mode = 0);
+	void expanderWrite(uint8_t, uint8_t mode = 0);
+	void pulseEnable(uint8_t, uint8_t);
 	uint8_t _Addr;
 	uint8_t _displayfunction;
 	uint8_t _displaycontrol;

@@ -56,17 +56,37 @@ Uint32 timerCallback(Uint32 interval, void *param)
     const unsigned int  amask = 0xff000000;
 #endif
 
+void destroy()
+{
+	delete COMPOSITOR;
+}
+
 Compositor::Compositor()
 {
     m_impl = new Impl;
+    m_is_init = false;
     m_curr_mousex = m_curr_mousey = m_drag_x = m_drag_y = 0;
     m_modal_widget = NULL;
+    m_touchscreen_enabled = false;
+    // Make sure we exit properly
+    atexit(destroy);
+}
+
+void
+Compositor::init(int width, int height, const char *touchscreendev)
+{
+    if (touchscreendev){
+    	setenv("SDL_MOUSEDRV", "TSLIB", 1);
+    	setenv("SDL_MOUSEDEV", touchscreendev, 1);
+    	m_touchscreen_enabled = true;
+    	// We don't need cursor in toucreen mode
+    }
+
     int sdl_status =  SDL_Init(SDL_INIT_VIDEO);
     if (sdl_status != 0){
     	fprintf(stderr, "\nUnable to initialize SDL: %i %s\n", sdl_status, SDL_GetError() );
         exit(1);
     }
-
 
 #ifdef USE_OPENGL
 	Uint32 flags = SDL_WINDOW_OPENGL;
@@ -83,8 +103,8 @@ Compositor::Compositor()
         "GUI",                  // window title
         SDL_WINDOWPOS_UNDEFINED,           // initial x position
         SDL_WINDOWPOS_UNDEFINED,           // initial y position
-        800,                               // width, in pixels
-        480,                               // height, in pixels
+        width,                               // width, in pixels
+        height,                               // height, in pixels
 		flags
     );
 
@@ -102,9 +122,14 @@ Compositor::Compositor()
 
     SDL_GL_SetSwapInterval(1);
 
+    if (touchscreendev){
+    	enable_cursor(false);
+    }
+
     m_focus_drag_widget = NULL;
     m_drag_started = false;
     g_painter = new Painter;
+    m_is_init = true;
 }
 
 Compositor::~Compositor()
@@ -131,18 +156,31 @@ Compositor::cursor(Compositor_cursors cursor){
 }
 
 void
+Compositor::enable_cursor(bool e)
+{
+	SDL_ShowCursor(e);
+}
+
+#define CHECK_INIT() \
+	if (!m_is_init){ \
+		init();		 \
+	}
+
+void
 Compositor::finish()
 {
     if(m_impl->glcontext)
         SDL_GL_DeleteContext(m_impl->glcontext);  
     if(m_impl->window)
         SDL_DestroyWindow(m_impl->window);
+    printf("Exiting normally\n");
     SDL_Quit();
 }
 
 Painter&
 Compositor::painter()
 {
+	CHECK_INIT()
 	return *g_painter;
 }
 
@@ -469,6 +507,7 @@ Compositor::handle_mouse_move_event(int x, int y)
 Widget*
 Compositor::create_new_window()
 {
+	CHECK_INIT()
     int w, h;
     SDL_GetWindowSize(m_impl->window, &w, &h);
     Widget* new_widget = new Widget(0, 0, w, h, "Window", NULL);
@@ -479,6 +518,7 @@ Compositor::create_new_window()
 void
 Compositor::set_widget_as_window(Widget* wid)
 {
+	CHECK_INIT()
     int w, h;
     SDL_GetWindowSize(m_impl->window, &w, &h);
     wid->resize(0, 0, w, h);
@@ -488,6 +528,7 @@ Compositor::set_widget_as_window(Widget* wid)
 void
 Compositor::resize_widget_to_window(Widget* w)
 {
+	CHECK_INIT()
     int x, y;
     SDL_GetWindowSize(m_impl->window, &x, &y);
     w->resize(x, y);
@@ -496,6 +537,7 @@ Compositor::resize_widget_to_window(Widget* w)
 int
 Compositor::screen_height()
 {
+	CHECK_INIT()
     int x, y;
     SDL_GetWindowSize(m_impl->window, &x, &y);
     return y;
@@ -504,6 +546,7 @@ Compositor::screen_height()
 int
 Compositor::screen_width()
 {
+	CHECK_INIT()
     int x, y;
     SDL_GetWindowSize(m_impl->window, &x, &y);
     return x;
@@ -525,6 +568,7 @@ Compositor::send_callback_event(void *from, void* data)
 int
 Compositor::run()
 {
+	CHECK_INIT()
     SDL_Event event;
 
     std::vector<Widget*>::iterator it = m_widgets.begin();

@@ -30,6 +30,7 @@ class Widget{
     Painter* 	m_painter;
     std::vector<float*> m_model_matrix_stack;
     void*		m_user_data;
+    bool 		m_refresh_backbuffer;
     
     void add_child(Widget* w);
     void remove_child(Widget* w);
@@ -71,6 +72,7 @@ protected:
     virtual bool accept_drag(int x, int y);
     virtual void widget_added_event(Widget* widget);
     virtual void init_viewport(int x, int y, int width, int height);
+    virtual void fonts_changed(int font_id);
 
     virtual void draw();
     virtual void post_draw();
@@ -81,6 +83,10 @@ public:
 
     void user_data(void* ud){m_user_data = ud;}
     void* user_data(){return m_user_data;}
+
+    bool touchscreen_enabled();
+    bool backbuffer_refresh(){return m_refresh_backbuffer;}
+    void backbuffer_refresh(bool r){m_refresh_backbuffer = r;}
 
     Widget* parent(){
         return m_parent;

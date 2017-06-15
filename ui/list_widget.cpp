@@ -14,6 +14,7 @@ List_widget::List_widget(int x, int y, int width, int height, const char* name, 
 	m_scroll_view = new Scroll(0, 0, 0, 0, "ScrollView", this);
 	m_list_layout = new Layout(0, 0, 0, 0, "ListLayout", m_scroll_view, LAYOUT_VERTICAL);
 
+
 	backgroung_gradient_enable(true);
 	tiles_enabled(true);
 	m_scroll_view->transparent(true);

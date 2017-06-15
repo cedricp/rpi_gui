@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "wiringPiI2C.h"
+#include <stdlib.h>
 
 // When the display powers up, it is configured as follows:
 //
@@ -42,6 +43,7 @@ LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t l
   _cols = lcd_cols;
   _rows = lcd_rows;
   _backlightval = LCD_NOBACKLIGHT;
+  init();
 }
 
 void LiquidCrystal_I2C::init()
@@ -55,22 +57,11 @@ void LiquidCrystal_I2C::init_priv()
 	begin(_cols, _rows);
 }
 
-void LiquidCrystal_I2C::writeI2C (int reg, int value)
-{
-	int fd  = wiringPiI2CSetup(_Addr);
-	if (fd < 0)
-		printf("LiquidCrystal_I2C::writeI2C : cannot open I2C device.\n");
-	wiringPiI2CWriteReg8 (fd, reg, value);
-	close(fd);
-}
-
 void LiquidCrystal_I2C::writeI2C (int val)
 {
-	int fd  = wiringPiI2CSetup(_Addr);
-	if (fd < 0)
-		printf("LiquidCrystal_I2C::writeI2C : cannot open I2C device.\n");
-	wiringPiI2CWrite (fd, val);
-	close(fd);
+    int _fd  = wiringPiI2CSetup(_Addr);
+	wiringPiI2CWrite(_fd, val);
+	close(_fd);
 }
 
 void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize)
@@ -257,12 +248,12 @@ void LiquidCrystal_I2C::backlight(void)
 
 /*********** mid level commands, for sending data/cmds */
 
-inline void LiquidCrystal_I2C::command(uint8_t value)
+void LiquidCrystal_I2C::command(uint8_t value)
 {
 	send(value, 0);
 }
 
-inline size_t LiquidCrystal_I2C::write(uint8_t value)
+size_t LiquidCrystal_I2C::write(uint8_t value)
 {
 	send(value, Rs);
 	return 0;
@@ -277,27 +268,28 @@ void LiquidCrystal_I2C::send(uint8_t value, uint8_t mode)
 {
 	uint8_t highnib=value>>4;
 	uint8_t lownib=value & 0x0F;
-	write4bits((highnib)|mode);
-	write4bits((lownib)|mode);
+
+	write4bits(highnib, mode);
+	write4bits(lownib, mode);
 }
 
-void LiquidCrystal_I2C::write4bits(uint8_t value)
+void LiquidCrystal_I2C::write4bits(uint8_t value, uint8_t mode)
 {
-	expanderWrite(value);
-	pulseEnable(value);
+	expanderWrite(value, mode);
+	pulseEnable(value, mode);
 }
 
-void LiquidCrystal_I2C::expanderWrite(uint8_t _data)
+void LiquidCrystal_I2C::expanderWrite(uint8_t _data, uint8_t mode)
 {
-	writeI2C((int)(_data) | _backlightval);
+	writeI2C((int)(_data<<4) | _backlightval | mode);
 }
 
-void LiquidCrystal_I2C::pulseEnable(uint8_t _data)
+void LiquidCrystal_I2C::pulseEnable(uint8_t _data, uint8_t mode)
 {
-	expanderWrite(_data | En);	// En high
+	expanderWrite(_data, mode | En);	// En high
 	delayMicroseconds(1);		// enable pulse must be >450ns
 
-	expanderWrite(_data & ~En);	// En low
+	expanderWrite(_data, mode);	// En low
 	delayMicroseconds(50);		// commands need > 37us to settle
 }
 
@@ -337,5 +329,4 @@ void LiquidCrystal_I2C::setBacklight(uint8_t new_val)
 		noBacklight();		// turn backlight off
 	}
 }
-
 

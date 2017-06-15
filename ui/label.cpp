@@ -20,10 +20,27 @@ Label::alignment(halign h, valign v)
 }
 
 void
+Label::fonts_changed(int font_id)
+{
+	text_build();
+	dirty(true);
+}
+
+void
 Label::label(std::string l)
 {
-	painter().build_text(m_font_id, l.c_str(), 0, 0, m_label_info);
+	if (l == m_current_string)
+		return;
+
+	m_current_string = l;
+	text_build();
 	dirty(true);
+}
+
+void
+Label::text_build()
+{
+	painter().build_text(m_font_id, m_current_string.c_str(), 0, 0, m_label_info);
 }
 
 int

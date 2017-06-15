@@ -16,6 +16,7 @@ struct Text_data{
 	std::string text;
 	FontImpl* data;
 	IBbox bbox;
+	int offset_y;
 };
 
 enum TextureMode {

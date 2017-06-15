@@ -1,6 +1,6 @@
 #include "slider.h"
 
-Slider::Slider(int x, int y, int width, int height, const char* name, Widget* parent, Slider_type type) : Widget( x, y, width, height, name, parent)
+Slider::Slider(int x, int y, int width, int height, const char* name, Widget* parent, Slider_orientation type) : Widget( x, y, width, height, name, parent)
 {
 	m_value = 6;
 	m_value_max = 30;
@@ -25,6 +25,10 @@ Slider::draw()
 
 	painter().use_texture(false);
 	drawing_area(draw_area);
+	painter().use_texture(true);
+	painter().draw_quad_gradient(draw_area.xmin(), draw_area.ymin(), draw_area.width(), draw_area.height(), m_bgcolor, m_bgcolor, m_pattern_texture, 18);
+	painter().use_texture(false);
+	painter().color(m_fgcolor);
 	painter().draw_quad(draw_area.xmin(), draw_area.ymin(), draw_area.width(), draw_area.height(), false, true, 2.);
 	painter().draw_quad(m_cursor.xmin(), m_cursor.ymin(), m_cursor.width(), m_cursor.height(), true, true);
 }
@@ -38,7 +42,7 @@ Slider::compute_cursor(){
 	float value_from_zero = m_value - m_value_min;
 	if (m_type == SLIDER_TYPE_HORIZONTAL){
 		float slider_size = (float)draw_area.width() / range;
-		slider_size = slider_size > 10 ? slider_size : 10;
+		slider_size = slider_size > 40 ? slider_size : 40;
 
 		float pos = value_from_zero * ((float)draw_area.width() - slider_size) / range;
 
@@ -47,7 +51,7 @@ Slider::compute_cursor(){
 		m_cursor.height(draw_area.height() - 5);
 	} else {
 		float slider_size = (float)draw_area.height() / range;
-		slider_size = slider_size > 10 ? slider_size : 10;
+		slider_size = slider_size > 40 ? slider_size : 40;
 
 		float pos = value_from_zero * ((float)draw_area.height() - slider_size) / range;
 
@@ -65,6 +69,16 @@ Slider::accept_drag(int x, int y)
 		return true;
 	}
 	return false;
+}
+
+void
+Slider::set_range(int min, int max)
+{
+	m_value_min = min;
+	m_value_max = max;
+	m_value = min;
+	compute_cursor();
+	dirty(true);
 }
 
 bool

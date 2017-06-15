@@ -319,12 +319,9 @@ void generate_text(Text_data& td)
 	int start_y = 0;
 	empty_bbox(td.bbox);
 
+	int margin_max = 0;
 	for( i=0; i< td.text.size(); ++i )
 	{
-		if (td.text[i] == '\n'){
-			start_x = start_x_mem;
-			start_y += td.data->finfo.size;
-		}
 		texture_glyph_t *glyph = texture_font_get_glyph( td.data->finfo.font, td.text[i] );
 		if( glyph != NULL )
 		{
@@ -334,10 +331,13 @@ void generate_text(Text_data& td)
 				kerning = texture_glyph_get_kerning( glyph, td.text[i-1] );
 			}
 			start_x += kerning;
+			int margin = (glyph->offset_y-glyph->height);
+			if (-margin_max > margin)
+				margin_max = -margin;
 			int x0  = (int)( start_x + glyph->offset_x );
-			int y0  = (int)( start_y - (glyph->offset_y-glyph->height) );
+			int y0  = (int)( start_y - margin);
 			int x1  = (int)( x0 + glyph->width );
-			int y1  = (int)( y0 - glyph->height );
+			int y1  = (int)( y0 - glyph->height);
 			float s0 = glyph->s0;
 			float t0 = glyph->t1;
 			float s1 = glyph->s1;
@@ -367,6 +367,7 @@ void generate_text(Text_data& td)
 			start_x += glyph->advance_x;
 		}
 	}
+	td.offset_y = margin_max;
 }
 
 Painter::Painter()
@@ -375,13 +376,8 @@ Painter::Painter()
 #ifndef USE_OPENGL
 	init_gles2();
 #endif
-	std::string font_file;
 	std::string font_name = "fonts/Roboto-Regular.ttf";
-	if( locate_resource(font_name, font_file) ){
-		m_impl->default_font_idx = load_fonts(font_file, 16);
-	} else {
-		std::cerr << "Cannot load default fonts, aborting" << std::endl;
-	}
+	m_impl->default_font_idx = load_fonts(font_name, 18);
 }
 
 Painter::~Painter()
@@ -1103,9 +1099,14 @@ Painter::load_fonts(std::string font_filename, int font_size, int atlas_size)
 {
 	Font_info finfo;
 	std::string font_name = string_basename(font_filename);
+	std::string full_path;
+	if (!locate_resource(font_filename, full_path)){
+		std::cerr << "Font file not found : " << font_filename << std::endl;
+		return -1;
+	}
 
 	for(int i = 0; i < m_impl->fonts.size(); ++i){
-		if (m_impl->fonts[i].name == font_filename)
+		if (m_impl->fonts[i].name == full_path && m_impl->fonts[i].size == font_size && m_impl->fonts[i].atlas_size == atlas_size)
 			return i;
 	}
 
@@ -1115,7 +1116,7 @@ Painter::load_fonts(std::string font_filename, int font_size, int atlas_size)
 		return -1;
 	}
 
-	finfo.font = texture_font_new( finfo.atlas, font_filename.c_str(), font_size );
+	finfo.font = texture_font_new( finfo.atlas, full_path.c_str(), font_size );
 	if (finfo.font == NULL){
 		std::cerr << "Painter::load_fonts : cannot create fonts " << font_name << std::endl;
 		return -1;
@@ -1127,7 +1128,7 @@ Painter::load_fonts(std::string font_filename, int font_size, int atlas_size)
 
 	finfo.size 			= font_size;
 	finfo.atlas_size 	= atlas_size;
-	finfo.name 			= font_name;
+	finfo.name 			= full_path;
 
 	m_impl->fonts.push_back(finfo);
 
@@ -1191,7 +1192,7 @@ Painter::draw_text(const Text_data& data)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	vector_t *vVector = data.data->text_vector;
-
+	int margin = data.offset_y;
 #ifdef USE_OPENGL
 	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < vVector->size / 4; ++i){
@@ -1200,7 +1201,7 @@ Painter::draw_text(const Text_data& data)
 		float u = *((float*)vVector->items + (i * 4) + 2);
 		float v = *((float*)vVector->items + (i * 4) + 3);
 		glTexCoord2f(u,v);
-		glVertex2f(vx, vy);
+		glVertex2f(vx, vy - margin);
 	}
 	glEnd();
 #else
