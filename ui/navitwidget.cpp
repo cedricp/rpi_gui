@@ -1,3 +1,15 @@
+/***
+ *     ____    ____   _____ ____   ____     ___  ____   ____   __ __       ____  __ __  ____
+ *    |    \  /    | / ___/|    \ |    \   /  _]|    \ |    \ |  |  |     /    ||  |  ||    |
+ *    |  D  )|  o  |(   \_ |  o  )|  o  ) /  [_ |  D  )|  D  )|  |  |    |   __||  |  | |  |
+ *    |    / |     | \__  ||   _/ |     ||    _]|    / |    / |  ~  |    |  |  ||  |  | |  |
+ *    |    \ |  _  | /  \ ||  |   |  O  ||   [_ |    \ |    \ |___, |    |  |_ ||  :  | |  |
+ *    |  .  \|  |  | \    ||  |   |     ||     ||  .  \|  .  \|     |    |     ||     | |  |
+ *    |__|\_||__|__|  \___||__|   |_____||_____||__|\_||__|\_||____/     |___,_| \__,_||____|
+ *
+ * (C) 2017 Cedric PAILLE (cedricpaille(at)gmail.com)
+ */
+
 #include "compositor.h"
 
 #include <SDL2/SDL.h>
@@ -191,7 +203,7 @@ Navit_widget::mouse_release_event(int button)
 {
 	char buffer[40];
 	int x, y;
-	mouse_pos(x, y);
+	mouse_coordinates(x, y);
 	sprintf(buffer, "release=%i-%i", x, y);
 	send_cmd(buffer);
 	return true;
@@ -202,7 +214,7 @@ Navit_widget::mouse_press_event(int button)
 {
 	char buffer[40];
 	int x, y;
-	mouse_pos(x, y);
+	mouse_coordinates(x, y);
 
 	sprintf(buffer, "press=%i-%i", x, y);
 	send_cmd(buffer);

@@ -1,3 +1,15 @@
+/***
+ *     ____    ____   _____ ____   ____     ___  ____   ____   __ __       ____  __ __  ____
+ *    |    \  /    | / ___/|    \ |    \   /  _]|    \ |    \ |  |  |     /    ||  |  ||    |
+ *    |  D  )|  o  |(   \_ |  o  )|  o  ) /  [_ |  D  )|  D  )|  |  |    |   __||  |  | |  |
+ *    |    / |     | \__  ||   _/ |     ||    _]|    / |    / |  ~  |    |  |  ||  |  | |  |
+ *    |    \ |  _  | /  \ ||  |   |  O  ||   [_ |    \ |    \ |___, |    |  |_ ||  :  | |  |
+ *    |  .  \|  |  | \    ||  |   |     ||     ||  .  \|  .  \|     |    |     ||     | |  |
+ *    |__|\_||__|__|  \___||__|   |_____||_____||__|\_||__|\_||____/     |___,_| \__,_||____|
+ *
+ * (C) 2017 Cedric PAILLE (cedricpaille(at)gmail.com)
+ */
+
 #include "painter.h"
 #include "bbox.h"
 #include "compositor.h"
@@ -247,6 +259,7 @@ process_triangles_2d(const struct contour* contour, struct contour* result)
 Text_data::Text_data()
 {
 	data = new FontImpl;
+	offset_y = 0;
 }
 
 Text_data::~Text_data(){
@@ -254,7 +267,7 @@ Text_data::~Text_data(){
 };
 
 #pragma pack(push, 1)
-// Stupid M$ window$ definitions
+// Stupid M$ window$ definitions :(
 typedef int LONG;
 typedef unsigned short WORD;
 typedef unsigned int DWORD;
@@ -310,6 +323,21 @@ load_bmp_texture(const char * pic, int& width, int &height, int& num_channel)
 
 	return data;
 }
+#include <clocale>
+#include <locale>
+
+std::wstring s2ws(const std::string& s) {
+    std::string curLocale = setlocale(LC_ALL, "");
+    const char* _Source = s.c_str();
+    size_t _Dsize = mbstowcs(NULL, _Source, 0) + 1;
+    wchar_t *_Dest = new wchar_t[_Dsize];
+    wmemset(_Dest, 0, _Dsize);
+    mbstowcs(_Dest,_Source,_Dsize);
+    std::wstring result = _Dest;
+    delete []_Dest;
+    setlocale(LC_ALL, curLocale.c_str());
+    return result;
+}
 
 void generate_text(Text_data& td)
 {
@@ -319,10 +347,12 @@ void generate_text(Text_data& td)
 	int start_y = 0;
 	empty_bbox(td.bbox);
 
+	std::wstring textdata = s2ws(td.text);
 	int margin_max = 0;
-	for( i=0; i< td.text.size(); ++i )
+
+	for( i=0; i< textdata.size(); ++i )
 	{
-		texture_glyph_t *glyph = texture_font_get_glyph( td.data->finfo.font, td.text[i] );
+		texture_glyph_t *glyph = texture_font_get_glyph( td.data->finfo.font, textdata[i] );
 		if( glyph != NULL )
 		{
 			int kerning = 0;

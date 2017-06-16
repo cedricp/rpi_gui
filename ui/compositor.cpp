@@ -1,6 +1,19 @@
+/***
+ *     ____    ____   _____ ____   ____     ___  ____   ____   __ __       ____  __ __  ____
+ *    |    \  /    | / ___/|    \ |    \   /  _]|    \ |    \ |  |  |     /    ||  |  ||    |
+ *    |  D  )|  o  |(   \_ |  o  )|  o  ) /  [_ |  D  )|  D  )|  |  |    |   __||  |  | |  |
+ *    |    / |     | \__  ||   _/ |     ||    _]|    / |    / |  ~  |    |  |  ||  |  | |  |
+ *    |    \ |  _  | /  \ ||  |   |  O  ||   [_ |    \ |    \ |___, |    |  |_ ||  :  | |  |
+ *    |  .  \|  |  | \    ||  |   |     ||     ||  .  \|  .  \|     |    |     ||     | |  |
+ *    |__|\_||__|__|  \___||__|   |_____||_____||__|\_||__|\_||____/     |___,_| \__,_||____|
+ *
+ * (C) 2017 Cedric PAILLE (cedricpaille(at)gmail.com)
+ */
+
 #include "compositor.h"
 #include "widget.h"
 #include "cursors/cross_cursor.h"
+#include "keycode.h"
 
 #include <iostream>
 #include <algorithm>
@@ -75,6 +88,10 @@ Compositor::Compositor()
 void
 Compositor::init(int width, int height, const char *touchscreendev)
 {
+	if (m_is_init){
+		std::cerr << "Compositor already initialized, cannot init()" << std::endl;
+		return;
+	}
     if (touchscreendev){
     	setenv("SDL_MOUSEDRV", "TSLIB", 1);
     	setenv("SDL_MOUSEDEV", touchscreendev, 1);
@@ -330,7 +347,7 @@ Compositor::handle_key_event(SDL_KeyboardEvent* key_ev, bool push)
 	if (!current)
 		return false;
 
-	return current->internal_key_event(SDL_GetKeyName(key_ev->keysym.sym), push);
+	return current->internal_key_event((KB_Scancode)key_ev->keysym.scancode, push);
 }
 
 bool
@@ -361,7 +378,7 @@ Compositor::handle_mouse_button_event(int button, bool push)
     which = NULL;
 
     if (m_modal_widget){
-    	bool focus_widget = m_modal_widget->screen_bbox().contains(x, y);
+    	bool focus_widget = m_modal_widget->screen_bbox_internal().contains(x, y);
     	if (!focus_widget){
     		m_modal_widget->hide();
     		m_modal_widget = NULL;
@@ -372,7 +389,7 @@ Compositor::handle_mouse_button_event(int button, bool push)
     // A drag operation is in progress, let's manage it
     if (m_focus_drag_widget){
     	bool taken = false;
-    	bool still_in_focus_widget = m_focus_drag_widget->screen_bbox().contains(x, y);
+    	bool still_in_focus_widget = m_focus_drag_widget->screen_bbox_internal().contains(x, y);
 
     	if (still_in_focus_widget && !m_drag_started){
     		taken = m_focus_drag_widget->internal_mouse_button_event(x, y, reassigned, &which, push);
@@ -391,14 +408,14 @@ Compositor::handle_mouse_button_event(int button, bool push)
 
     // Normal operations, send events to widgets
     for (; it != m_widgets.rend(); ++it){
-        if ((*it)->screen_bbox().contains(x, y)){
+        if ((*it)->screen_bbox_internal().contains(x, y)){
             bool taken = (*it)->internal_mouse_button_event(x, y, reassigned, &which, push);
             if (taken && which && push && reassigned == EVENT_MOUSE_BUTTON_LEFT){
             	m_drag_started = false;
             	// We want to pass drag event to widget or parent widget accepting it
             	Widget* w = which;
             	while(w){
-            		IBbox scrb = w->screen_bbox();
+            		IBbox scrb = w->screen_bbox_internal();
             		int rel_x = x - scrb.xmin();
             		int rel_y = y - scrb.ymin();
             		if (w->accept_drag(rel_x, rel_y))
@@ -439,7 +456,7 @@ Compositor::handle_mouse_wheel_event(int wheel_ev)
     SDL_GetMouseState(&x, &y);
 
     if (m_modal_widget){
-    	bool focus_widget = m_modal_widget->screen_bbox().contains(x, y);
+    	bool focus_widget = m_modal_widget->screen_bbox_internal().contains(x, y);
     	if (!focus_widget)
     		return false;
     }
@@ -448,7 +465,7 @@ Compositor::handle_mouse_wheel_event(int wheel_ev)
     which = NULL;
 
     for (; it != m_widgets.rend(); ++it){
-        if ((*it)->screen_bbox().contains(x, y)){
+        if ((*it)->screen_bbox_internal().contains(x, y)){
             bool taken = (*it)->internal_mouse_wheel_event(x, y, wheel_ev, &which);
             if (taken)
                 return true;
@@ -465,7 +482,7 @@ Compositor::handle_mouse_move_event(int x, int y)
 	m_curr_mousey = y;
 
     if (m_modal_widget){
-    	bool focus_widget = m_modal_widget->screen_bbox().contains(x, y);
+    	bool focus_widget = m_modal_widget->screen_bbox_internal().contains(x, y);
     	if (!focus_widget)
     		return false;
     }
@@ -482,7 +499,7 @@ Compositor::handle_mouse_move_event(int x, int y)
 
     std::vector<Widget*>::reverse_iterator it = m_widgets.rbegin();
     for (; it != m_widgets.rend(); ++it){
-    	if ((*it)->screen_bbox().contains(x, y)){
+    	if ((*it)->screen_bbox_internal().contains(x, y)){
             taken = (*it)->internal_mouse_motion_event(x, y, &which);
             if (taken)
                 break;

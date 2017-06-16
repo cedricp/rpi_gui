@@ -1,3 +1,15 @@
+/***
+ *     ____    ____   _____ ____   ____     ___  ____   ____   __ __       ____  __ __  ____
+ *    |    \  /    | / ___/|    \ |    \   /  _]|    \ |    \ |  |  |     /    ||  |  ||    |
+ *    |  D  )|  o  |(   \_ |  o  )|  o  ) /  [_ |  D  )|  D  )|  |  |    |   __||  |  | |  |
+ *    |    / |     | \__  ||   _/ |     ||    _]|    / |    / |  ~  |    |  |  ||  |  | |  |
+ *    |    \ |  _  | /  \ ||  |   |  O  ||   [_ |    \ |    \ |___, |    |  |_ ||  :  | |  |
+ *    |  .  \|  |  | \    ||  |   |     ||     ||  .  \|  .  \|     |    |     ||     | |  |
+ *    |__|\_||__|__|  \___||__|   |_____||_____||__|\_||__|\_||____/     |___,_| \__,_||____|
+ *
+ * (C) 2017 Cedric PAILLE (cedricpaille(at)gmail.com)
+ */
+
 #include "widget.h"
 #include "compositor.h"
 
@@ -182,12 +194,12 @@ void Widget::internal_draw(bool force)
 		return;
 
     int screen_h 	= COMPOSITOR->screen_height();
-    IBbox bscr 		= screen_bbox_corrected();
+    IBbox bscr 		= screen_bbox();
 
     // Clamp drawing to parent size
     Widget* parent = m_parent;
     while (parent){
-    	bscr.crop(parent->screen_bbox_corrected());
+    	bscr.crop(parent->screen_bbox());
     	parent = parent->m_parent;
     }
 
@@ -197,7 +209,8 @@ void Widget::internal_draw(bool force)
     }
 
     // Start drawing stuffs
-    init_viewport(screen_bbox_corrected().xmin(), screen_bbox_corrected().ymin(), screen_bbox_corrected().width(), screen_bbox_corrected().height());
+    IBbox sbc(screen_bbox());
+    init_viewport(sbc.xmin(), sbc.ymin(), sbc.width(), sbc.height());
     painter().scissor_begin( bscr.xmin(), bscr.ymin(), bscr.width(), bscr.height() );
     if (!m_transparent)
     	painter().clear_color_buffer(m_bgcolor);
@@ -519,26 +532,16 @@ Widget::drawing_area(IBbox &area)
 }
 
 IBbox
-Widget::screen_bbox_corrected()
+Widget::screen_bbox()
 {
-    int width  = m_bbox.width();
-    int height = m_bbox.height();
-    int x = m_bbox.xmin();
-    int y = m_bbox.ymin();
+	IBbox sbb = screen_bbox_internal();
 
-    Widget* parent = m_parent;
-    while(parent){
-        x += parent->m_bbox.xmin();
-        y += parent->m_bbox.ymin();
-        parent = parent->m_parent;
-    }
-
-    int new_y = COMPOSITOR->screen_height() - y - height;
-    return IBbox(x, x + width, new_y, new_y + height);
+    int new_y = COMPOSITOR->screen_height() - sbb.ymin() - sbb.height();
+    return IBbox(sbb.xmin(), sbb.xmax(), new_y, new_y + sbb.height());
 }
 
 IBbox
-Widget::screen_bbox()
+Widget::screen_bbox_internal()
 {
     int width  = m_bbox.width();
     int height = m_bbox.height();
@@ -592,7 +595,7 @@ Widget::child_widget_in(int x, int y){
         if (ret) break;
     }
       
-    if (ret == NULL && screen_bbox().contains(x,y))
+    if (ret == NULL && screen_bbox_internal().contains(x,y))
         return this;
         
     return NULL;
@@ -611,7 +614,7 @@ Widget::internal_mouse_motion_event(int xx, int yy, Widget **w){
 	if (hidden()) return false;
 	std::vector<Widget*>::reverse_iterator it = m_children_widgets.rbegin();
 	for (; it < m_children_widgets.rend(); ++it){
-		bool infocus = (*it)->screen_bbox().contains(xx, yy);
+		bool infocus = (*it)->screen_bbox_internal().contains(xx, yy);
 		if (infocus){
 			 bool ev = (*it)->internal_mouse_motion_event(xx, yy, w);
 			 if (ev)
@@ -620,7 +623,7 @@ Widget::internal_mouse_motion_event(int xx, int yy, Widget **w){
 	}
 
 	int xp, yp;
-	mouse_pos(xp, yp);
+	mouse_coordinates(xp, yp);
 	mouse_motion_event(xp, yp);
 
 	if(*w == NULL){
@@ -632,37 +635,37 @@ Widget::internal_mouse_motion_event(int xx, int yy, Widget **w){
 }
 
 void
-Widget::mouse_pos(int& x, int& y)
+Widget::mouse_coordinates(int& x, int& y)
 {
 	COMPOSITOR->mouse_position(x, y);
-	IBbox b = screen_bbox();
+	IBbox b = screen_bbox_internal();
 	x -= b.xmin();
 	y -= b.ymin();
 }
 
 bool
-Widget::internal_key_event(const char* code, bool press)
+Widget::internal_key_event(KB_Scancode scancode, bool press)
 {
 	bool taken = false;
 	if (press)
-		taken = key_press_event(code);
+		taken = key_press_event(scancode);
 	else
-		taken = key_release_event(code);
+		taken = key_release_event(scancode);
 
 	if (!taken && parent()){
-		taken = parent()->internal_key_event(code, press);
+		taken = parent()->internal_key_event(scancode, press);
 	}
 	return taken;
 }
 
 bool
-Widget::key_press_event(const char* code)
+Widget::key_press_event(KB_Scancode code)
 {
 	return false;
 }
 
 bool
-Widget::key_release_event(const char* code)
+Widget::key_release_event(KB_Scancode code)
 {
 	return false;
 }
@@ -674,7 +677,7 @@ Widget::internal_mouse_button_event(int x, int y, int button, Widget **w, bool p
 
 	std::vector<Widget*>::reverse_iterator it = m_children_widgets.rbegin();
 	for (; it < m_children_widgets.rend(); ++it){
-		bool infocus = (*it)->screen_bbox().contains(x, y);
+		bool infocus = (*it)->screen_bbox_internal().contains(x, y);
 		if (infocus){
 			 bool ev = (*it)->internal_mouse_button_event(x, y, button, w, press);
 			 if (ev)
@@ -703,7 +706,7 @@ Widget::internal_mouse_wheel_event(int x, int y, int we, Widget **w)
 	if (hidden()) return false;
 	std::vector<Widget*>::reverse_iterator it = m_children_widgets.rbegin();
 	for (; it < m_children_widgets.rend(); ++it){
-		bool infocus = (*it)->screen_bbox().contains(x, y);
+		bool infocus = (*it)->screen_bbox_internal().contains(x, y);
 		if (infocus){
 			 bool ev = (*it)->internal_mouse_wheel_event(x, y, we, w);
 			 if (ev)

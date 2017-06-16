@@ -8,6 +8,7 @@
 #include "slider.h"
 #include "multi_panel.h"
 #include "file_chooser.h"
+#include <wchar.h>
 
 int main(int argn, char** args)
 {

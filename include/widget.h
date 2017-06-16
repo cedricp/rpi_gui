@@ -5,6 +5,7 @@
 #include "bbox.h"
 #include "events.h"
 #include "painter.h"
+#include "keycode.h"
 #include <vector>
 #include <string>
 
@@ -36,7 +37,7 @@ class Widget{
     void remove_child(Widget* w);
     void internal_draw(bool force = false);
     void get_all_children(std::vector<Widget*>&);
-    bool internal_key_event(const char* code, bool press);
+    bool internal_key_event(KB_Scancode scancode, bool press);
     bool internal_mouse_button_event(int x, int y, int button, Widget **w, bool press);
     bool internal_mouse_motion_event(int x, int y, Widget **w);
     bool internal_mouse_wheel_event(int x, int y, int we, Widget **w);
@@ -60,8 +61,8 @@ protected:
     virtual void parent_resize_event(int width, int height);
     virtual bool enter_event();
     virtual bool leave_event();
-    virtual bool key_press_event(const char* code);
-    virtual bool key_release_event(const char* code);
+    virtual bool key_press_event(KB_Scancode code);
+    virtual bool key_release_event(KB_Scancode code);
     virtual bool mouse_press_event(int button);
     virtual bool mouse_release_event(int button);
     virtual bool mouse_wheel_event(int button);
@@ -120,8 +121,8 @@ public:
     void x(int x);
     void y(int y);
 
+    IBbox 	screen_bbox_internal();
     IBbox 	screen_bbox();
-    IBbox 	screen_bbox_corrected();
     IBbox 	relative_bbox();
     void	drawing_area(IBbox& area);
     void 	screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy);
@@ -141,7 +142,7 @@ public:
     void scale(float x, float y, float z);
     void identity();
     
-    void mouse_pos(int&x, int&y);
+    void mouse_coordinates(int&x, int&y);
 
     void hide();
     void show();

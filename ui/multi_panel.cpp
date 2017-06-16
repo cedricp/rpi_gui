@@ -1,3 +1,15 @@
+/***
+ *     ____    ____   _____ ____   ____     ___  ____   ____   __ __       ____  __ __  ____
+ *    |    \  /    | / ___/|    \ |    \   /  _]|    \ |    \ |  |  |     /    ||  |  ||    |
+ *    |  D  )|  o  |(   \_ |  o  )|  o  ) /  [_ |  D  )|  D  )|  |  |    |   __||  |  | |  |
+ *    |    / |     | \__  ||   _/ |     ||    _]|    / |    / |  ~  |    |  |  ||  |  | |  |
+ *    |    \ |  _  | /  \ ||  |   |  O  ||   [_ |    \ |    \ |___, |    |  |_ ||  :  | |  |
+ *    |  .  \|  |  | \    ||  |   |     ||     ||  .  \|  .  \|     |    |     ||     | |  |
+ *    |__|\_||__|__|  \___||__|   |_____||_____||__|\_||__|\_||____/     |___,_| \__,_||____|
+ *
+ * (C) 2017 Cedric PAILLE (cedricpaille(at)gmail.com)
+ */
+
 #include "multi_panel.h"
 
 Multi_panel::Multi_panel(int x, int y, int width, int height, const char* name, Widget* parent) : Widget(x, y, width, height, name , parent)

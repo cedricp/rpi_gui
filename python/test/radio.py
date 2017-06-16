@@ -1,4 +1,4 @@
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 import sys, os
 sys.path.append("/sources/GUI/BUILD_X86/python")
 import ui
@@ -129,9 +129,11 @@ class Radio(ui.Widget):
         self.lay.add_widget(self.file_man2)
         self.layout_v.add_widget(self.lay)
 
+    def key_press_event(self, keycode):
+        print keycode
 
 comp = ui.get_compositor()
-comp.init(800, 480, "Test")
+comp.init(800, 480)
 
 window = comp.create_new_window()
 panel = ui.Multi_panel(0,0,window.w(), window.h(), "MP", window)

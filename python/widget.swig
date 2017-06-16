@@ -64,15 +64,15 @@ CHANGE_OWNERSHIP(Widget)
   
 %include "../include/widget.h"
 
-%ignore Widget::mouse_pos(int&x, int&y);
+%ignore Widget::mouse_coordinates(int&x, int&y);
 %ignore Widget::drawing_area(IBbox&);
 
 %extend Widget {
 	PyObject*
-	mouse_pos()
+	mouse_coordinates()
 	{
 		int x, y;
-		self->mouse_pos(x,y);
+		self->mouse_coordinates(x,y);
 		PyObject* ret = PyTuple_New(2);
 		PyObject* pyx = PyInt_FromLong(x);
 		PyObject* pyy = PyInt_FromLong(y);
