@@ -84,6 +84,11 @@ Widget::~Widget()
     std::vector<float*>::iterator it = m_model_matrix_stack.begin();
     for (; it != m_model_matrix_stack.end(); ++it)
     	delete(*it);
+
+    std::vector<int>::iterator itt;
+    for (itt = m_timers.begin(); itt != m_timers.end(); ++itt){
+    	COMPOSITOR->remove_timer(*itt);
+    }
 }
 
 /** @brief returns the global painter class
@@ -577,13 +582,19 @@ Widget::screen_to_widget_coordinates(int sx, int sy, int &wx, int &wy)
 int
 Widget::add_timer(int ms)
 {
-	return COMPOSITOR->add_timer_event(ms, this);
+	int timer = COMPOSITOR->add_timer_event(ms, this);
+	m_timers.push_back(timer);
+	return timer;
 }
 
 void
 Widget::remove_timer(int timer_id)
 {
 	COMPOSITOR->remove_timer(timer_id);
+	std::vector<int>::iterator it = std::find(m_timers.begin(), m_timers.end(), timer_id);
+	if (it != m_timers.end()){
+		m_timers.erase(it);
+	}
 }
 
 Widget*

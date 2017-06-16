@@ -45,6 +45,10 @@ struct impl{
 		    event.user.data2 = 0;
 		}
 	}
+	~impl(){
+		if(data)
+			free(data);
+	}
 	SDL_Thread* sdl_thread;
 	SDL_Event 	event;
 	void		*data;
@@ -160,6 +164,7 @@ Navit_widget::~Navit_widget()
 	int retval;
 	m_impl->kill_thread = 1;
 	SDL_WaitThread(m_impl->sdl_thread, &retval);
+	delete m_impl;
 }
 
 void

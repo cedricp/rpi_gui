@@ -56,11 +56,44 @@ struct Font_info{
 	Font_info(){
 		atlas = NULL;
 		font  = NULL;
+		is_owner = false;
+	}
+
+	Font_info(texture_atlas_t* a, texture_font_t* t){
+		atlas = a;
+		font  = t;
+		is_owner = true;
+	}
+
+	Font_info(const Font_info& b){
+		atlas = b.atlas;
+		font  = b.font;
+		size = b.size;
+		atlas_size = b.atlas_size;
+		is_owner = false;
+	}
+
+	Font_info& operator = (const Font_info& b){
+		atlas = b.atlas;
+		font  = b.font;
+		size = b.size;
+		atlas_size = b.atlas_size;
+		is_owner = false;
+		return *this;
+	}
+	~Font_info(){
+		if (is_owner){
+			if (atlas)
+				texture_atlas_delete(atlas);
+			if (font)
+				texture_font_delete(font);
+		}
 	}
 	texture_atlas_t *atlas;
 	texture_font_t *font;
 	std::string    name;
 	int size, atlas_size;
+	bool is_owner;
 };
 
 struct FontImpl{
@@ -72,7 +105,7 @@ struct FontImpl{
 			vector_delete(text_vector);
 	}
 	vector_t* text_vector;
-	Font_info finfo;
+	Font_info* finfo;
 };
 
 #ifndef USE_OPENGL
@@ -95,8 +128,13 @@ struct gl_program
 #endif
 
 struct PImpl{
+	~PImpl(){
+		for(int i = 0; i < fonts.size(); ++i){
+			delete fonts[i];
+		}
+	}
 	std::map< std::string, Img_info > textures;
-	std::vector< Font_info > fonts;
+	std::vector< Font_info* > fonts;
 	unsigned int default_font_idx;
 #ifndef USE_OPENGL
 	gl_program gl_pgm[GL_PROGRAM_SIZE];
@@ -352,7 +390,7 @@ void generate_text(Text_data& td)
 
 	for( i=0; i< textdata.size(); ++i )
 	{
-		texture_glyph_t *glyph = texture_font_get_glyph( td.data->finfo.font, textdata[i] );
+		texture_glyph_t *glyph = texture_font_get_glyph( td.data->finfo->font, textdata[i] );
 		if( glyph != NULL )
 		{
 			int kerning = 0;
@@ -1127,7 +1165,7 @@ Painter::draw_quad(int x, int y, int width, int height, bool fill, bool solid, f
 int
 Painter::load_fonts(std::string font_filename, int font_size, int atlas_size)
 {
-	Font_info finfo;
+
 	std::string font_name = string_basename(font_filename);
 	std::string full_path;
 	if (!locate_resource(font_filename, full_path)){
@@ -1136,29 +1174,30 @@ Painter::load_fonts(std::string font_filename, int font_size, int atlas_size)
 	}
 
 	for(int i = 0; i < m_impl->fonts.size(); ++i){
-		if (m_impl->fonts[i].name == full_path && m_impl->fonts[i].size == font_size && m_impl->fonts[i].atlas_size == atlas_size)
+		if (m_impl->fonts[i]->name == full_path && m_impl->fonts[i]->size == font_size && m_impl->fonts[i]->atlas_size == atlas_size)
 			return i;
 	}
 
-	finfo.atlas = texture_atlas_new( atlas_size, atlas_size, 1 );
-	if (finfo.atlas == NULL){
+	texture_atlas_t* atlas = texture_atlas_new( atlas_size, atlas_size, 1 );
+	if (atlas == NULL){
 		std::cerr << "Painter::load_fonts : cannot create atlas for fonts " << font_name << std::endl;
 		return -1;
 	}
 
-	finfo.font = texture_font_new( finfo.atlas, full_path.c_str(), font_size );
-	if (finfo.font == NULL){
+	texture_font_t* font = texture_font_new( atlas, full_path.c_str(), font_size );
+	if (font == NULL){
 		std::cerr << "Painter::load_fonts : cannot create fonts " << font_name << std::endl;
 		return -1;
 	}
 
-	texture_font_load_glyphs( finfo.font, L" !\"#$%&'()*+,-./0123456789:;<=>?"
+	Font_info *finfo = new Font_info(atlas, font);
+	texture_font_load_glyphs( finfo->font, L" !\"#$%&'()*+,-./0123456789:;<=>?"
 		    							  L"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 										  L"`abcdefghijklmnopqrstuvwxyz{|}~");
 
-	finfo.size 			= font_size;
-	finfo.atlas_size 	= atlas_size;
-	finfo.name 			= full_path;
+	finfo->size 			= font_size;
+	finfo->atlas_size 		= atlas_size;
+	finfo->name 			= full_path;
 
 	m_impl->fonts.push_back(finfo);
 
@@ -1169,14 +1208,14 @@ int
 Painter::font_by_name(std::string name)
 {
 	for(int i = 0; i < m_impl->fonts.size(); ++i){
-		if (m_impl->fonts[i].name == name)
+		if (m_impl->fonts[i]->name == name)
 			return i;
 	}
 	return -1;
 }
 
 void
-Painter::remove_fonts(int idx)
+Painter::delete_fonts(int idx)
 
 {
 	if (idx >= m_impl->fonts.size()){
@@ -1184,9 +1223,7 @@ Painter::remove_fonts(int idx)
 		return;
 	}
 
-	texture_atlas_delete(m_impl->fonts[idx].atlas);
-	texture_font_delete(m_impl->fonts[idx].font);
-
+	delete m_impl->fonts[idx];
 	m_impl->fonts.erase(m_impl->fonts.begin() + idx);
 }
 
@@ -1217,7 +1254,7 @@ Painter::draw_text(const Text_data& data)
 		return;
 
 	glActiveTexture( GL_TEXTURE0 );
-	glBindTexture( GL_TEXTURE_2D, data.data->finfo.atlas->id);
+	glBindTexture( GL_TEXTURE_2D, data.data->finfo->atlas->id);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -41,7 +41,7 @@ struct Impl {
 };
 
 static Compositor *GLOBAL_COMPOSITOR = NULL;
-static Painter* g_painter;
+static Painter* g_painter = NULL;
 
 Uint32 timerCallback(Uint32 interval, void *param)
 {
@@ -190,6 +190,8 @@ Compositor::finish()
         SDL_GL_DeleteContext(m_impl->glcontext);  
     if(m_impl->window)
         SDL_DestroyWindow(m_impl->window);
+    if (g_painter)
+        delete g_painter;
     printf("Exiting normally\n");
     SDL_Quit();
 }

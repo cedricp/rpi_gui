@@ -32,6 +32,7 @@ class Widget{
     std::vector<float*> m_model_matrix_stack;
     void*		m_user_data;
     bool 		m_refresh_backbuffer;
+    std::vector<int> m_timers;
     
     void add_child(Widget* w);
     void remove_child(Widget* w);

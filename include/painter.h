@@ -93,7 +93,7 @@ public:
 
 	int load_fonts(std::string font_filename, int font_size, int atlas_size = 1024);
 	int font_by_name(std::string name);
-	void remove_fonts(int idx);
+	void delete_fonts(int idx);
 	char* load_svg_image(std::string filename, int &w, int &h);
 
 	bool locate_resource(std::string name, std::string &path);
